@@ -45,6 +45,9 @@ Claude Code'u yeniden başlatın. Önerilen: `/plugin` > **Marketplaces** > `inb
 
 ## Güncelleme
 
+> Plugin güncel değilse **çalışmaz**: her çalıştırmada GitHub'daki son sürümle karşılaştırılır; eskiyse
+> plan hazırlanmaz ve aşağıdaki güncelleme komutu gösterilir. Güncelleyip Claude Code'u yeniden başlatın.
+
 Auto-update açıksa bir şey yapmanıza gerek yok. Elle güncellemek için terminalde tek satır:
 
 ```bash
@@ -136,8 +139,10 @@ backlink-finder-skill/
 │   ├── filter_sites.py           Son 6 ay, dil, bütçe, DR ön elemesi
 │   ├── keyword_select.py         Öncelik grubu + dalgalanma + kategori skorlaması
 │   ├── category_scan.py          Havuzda menü kategorisi taraması (paralel)
+│   ├── surum_kontrol.py          Sürüm kontrolü: eskiyse çalışmayı engeller (hook + skill ilk adımı)
 │   ├── site_kontrol.py           Zararlı sorgu + yeni site kararı (ELE / DİKKAT / TEMİZ)
 │   └── export_excel.py           Internal + Shared Excel'e aylık sayfa
+├── hooks/hooks.json              Eski sürümde çalışmayı engelleyen hook'lar
 ├── references/widget.md          claude.ai için opsiyonel panel
 └── requirements.txt
 ```

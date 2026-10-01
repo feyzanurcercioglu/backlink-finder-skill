@@ -29,6 +29,20 @@ Her ay markalar için backlink çalışması yapılır. Bu skill o ayın planın
 
 Aşağıdaki komutlarda `$P="${CLAUDE_PLUGIN_ROOT}"`, `$U="$HOME/Documents/Backlink Finder"`, `$W="$U/<Marka>/calisma/<Ay_Yıl>"`.
 
+## Adım -1: Sürüm kontrolü (her çalıştırmada ilk iş, atlanamaz)
+
+Hiçbir şey sormadan, hiçbir veri çekmeden önce:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/surum_kontrol.py"
+```
+
+- `SURUM_GUNCEL` → devam et.
+- `SURUM_ESKI` (çıkış kodu 2) → **dur.** Script'in yazdığı güncelleme talimatını kullanıcıya aynen ver ve çalışmayı başlatma; kullanıcı ısrar etse bile eski sürümle plan hazırlama, sadece güncellemeye yönlendir. Eski sürümde mecra listesi ve kurallar güncel olmadığı için çıkan plan hatalı olur.
+- `SURUM_BILINMIYOR` (internet yok / GitHub erişilemez) → kullanıcıya sürümün doğrulanamadığını söyle ve devam etmek isteyip istemediğini sor.
+
+Plugin ayrıca iki hook ile aynı kontrolü yapar (`hooks/hooks.json`): skill çağrısı (PreToolUse) ve `/backlink-finder` ile başlayan mesajlar (UserPromptSubmit) eski sürümde engellenir.
+
 ## 0. Başlangıç: kullanıcıya sor
 
 Skill çağrıldığında, mesajda verilmemiş olanları **tek bir mesajda** sor (eksik olanı varsayma):
@@ -47,6 +61,7 @@ Opsiyonel girdiler (sorma, verilirse kullan): çalışma ayı (varsayılan için
 ## Akış
 
 ```
+[-1] Sürüm kontrolü (surum_kontrol.py): eskiyse DUR, güncelleme talimatı ver
 [0] Marka, bütçe, son 6 ay siteleri, önceki çalışma Excel'leri → dönem tarihleri
 [1] Geçmiş: önceki Excel'ler + markanın Internal Excel'i + kullanıcı listesi → son 6 ay (gecmis_oku.py)
 [2] Plugin'deki mecra listesi → birleşik havuz (build_pool.py)

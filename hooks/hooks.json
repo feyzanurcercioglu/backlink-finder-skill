@@ -1,0 +1,20 @@
+{
+  "description": "Backlink Finder: eski sürümle çalışmayı engeller (önce güncelleme zorunlu)",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/surum_kontrol.py\" --hook pretool", "timeout": 15 }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/surum_kontrol.py\" --hook prompt", "timeout": 15 }
+        ]
+      }
+    ]
+  }
+}
