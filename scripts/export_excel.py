@@ -192,6 +192,8 @@ if __name__ == '__main__':
     ap.add_argument('--internal', required=True, help='<Marka>_Backlink_Internal.xlsx (3 blok)')
     ap.add_argument('--shared', required=True, help='<Marka>_Backlink_Shared.xlsx (sadece plan tablosu)')
     ap.add_argument('--open', action='store_true', help='Yazdıktan sonra iki dosyayı varsayılan uygulamada (Excel) aç')
+    ap.add_argument('--link-dir', help='Kullanıcının çalıştığı klasör: iki dosyaya buradan kısayol (symlink) oluşturulur; '
+                                       'kısayol açılamıyorsa (Windows) kopyalanır')
     a = ap.parse_args()
     plan = json.load(open(a.plan, encoding='utf-8'))
     missing = [s['domain'] for s in plan['sites'] if not s.get('inbound_note')]
@@ -202,8 +204,28 @@ if __name__ == '__main__':
     print(f'✓ {plan["month_year"]} sayfası yazıldı | {len(plan["sites"])} site, toplam {tr_num(total)} TL + KDV')
     print(f'  Internal: {a.internal}')
     print(f'  Shared:   {a.shared}')
-    if a.open:
+    targets = [a.internal, a.shared]
+    if a.link_dir:
+        os.makedirs(a.link_dir, exist_ok=True)
+        links = []
         for f in (a.internal, a.shared):
+            dst = os.path.join(a.link_dir, os.path.basename(f))
+            if os.path.abspath(dst) == os.path.abspath(f):
+                links.append(dst)
+                continue
+            if os.path.islink(dst) or os.path.exists(dst):
+                os.remove(dst)
+            try:
+                os.symlink(os.path.abspath(f), dst)
+            except OSError:
+                import shutil
+                shutil.copy2(f, dst)
+            links.append(dst)
+        print('  Çalışma klasöründeki linkler:')
+        for l in links:
+            print(f'    {l}')
+    if a.open:
+        for f in targets:
             try:
                 if platform.system() == 'Darwin':
                     subprocess.run(['open', f], check=False)

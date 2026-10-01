@@ -254,7 +254,10 @@ Elenen sezonluk kelimeler, elenen siteler (gerekçeli: kategori yok / PBN / DR) 
 
 Tabloda her kelimenin **link verilecek URL'i** (markanın kategori sayfası, tam yol) ve her sitenin **yayın kategorisi URL'i** mutlaka yer alır; ekip linki ve yayın yerini tablodan doğrudan kontrol edebilmeli. Sunmadan önce her iki URL tipini `curl -s -o /dev/null -L -w "%{http_code}"` ile kontrol et; 200 dönmeyen URL'i kullanma, doğrusunu bul.
 
-**Excel'i hemen ver:** Planı sohbette sunduğun anda Excel'leri de yaz ve kullanıcının bilgisayarında aç; onay bekleme (7. adımdaki komut, `--open` ile). Sohbetteki tablo ile Excel aynı planı gösterir; kullanıcı ikisinden birinde inceleyebilir. Mesajın sonunda iki dosyanın tam yolunu tıklanabilir şekilde ver.
+**Çalışmayı sohbette ve Excel'de birlikte ver:**
+- **Sohbette:** planın tamamını tablo olarak ver; özetle yetinme. Plan tablosu (site, DR, trafik, ücretler, kelime, link verilecek URL, yayın kategorisi, Inbound Notu, güvenlik durumu), kelime tablosu ve elenenler. Kullanıcı Excel'i açmadan her şeyi sohbetten okuyabilmeli.
+- **Excel:** aynı anda (onay beklemeden) 7. adımdaki komutla iki dosyayı yaz, `--link-dir` ile kullanıcının Claude Code'u açtığı klasöre (`$PWD`) kısayol koy ve `--open` ile aç. Asıl dosyalar `$U/<Marka>/` altında kalır (aylar orada birikir); çalışma klasöründeki kısayollar aynı dosyayı açar, orada yapılan düzenlemeler kaybolmaz.
+- Mesajın sonunda dosyaları tıklanabilir bağlantı olarak ver, ör. `[Dagi_Backlink_Shared.xlsx](./Dagi_Backlink_Shared.xlsx)` (çalışma klasöründeki kısayol) ve asıl konumu (`~/Documents/Backlink Finder/Dagi/`).
 
 Ardından sor: "Değiştirmek istediğin site/kelime var mı?" Revize gelirse planı güncelle, bütçe/son 6 ay/güvenlik kurallarını yeniden kontrol et ve Excel'i aynı komutla yeniden yaz (aynı ayın sayfası güncellenir, diğer aylar korunur) ve tekrar aç. Kullanıcı Excel'i açık tutuyorsa kaydetme hatası alınabilir; o durumda kapatmasını iste.
 
@@ -267,8 +270,10 @@ Bu adım 6. adımdaki sunumla birlikte çalışır (plan sunulur sunulmaz) ve he
 ```bash
 python3 "$P/scripts/export_excel.py" "$W/plan.json" \
   --internal "$U/<Marka>/<Marka>_Backlink_Internal.xlsx" \
-  --shared   "$U/<Marka>/<Marka>_Backlink_Shared.xlsx" --open
+  --shared   "$U/<Marka>/<Marka>_Backlink_Shared.xlsx" --link-dir "$PWD" --open
 ```
+
+`--link-dir "$PWD"`: kullanıcının çalıştığı klasöre `<Marka>_Backlink_Internal.xlsx` ve `<Marka>_Backlink_Shared.xlsx` kısayolları (symlink; olmazsa kopya) koyar. `$PWD` zaten `$U/<Marka>` ise atlanır.
 
 Her marka için iki kalıcı dosya vardır; her çalışma ayı bu dosyalara **yeni bir sayfa** olarak eklenir ("Ekim 2026", sonra "Kasım 2026"...). Dosya yoksa oluşturulur. Aynı ayın sayfası zaten varsa (revizyon) yalnızca o sayfa yeniden yazılır, diğer aylara dokunulmaz. Sayfalar kronolojik sıralanır.
 
@@ -279,7 +284,7 @@ Her marka için iki kalıcı dosya vardır; her çalışma ayı bu dosyalara **y
 
 **Shared** (markayla paylaşılan) - sayfada yalnızca 1. blok (plan tablosu + Inbound Notu + Total). Fiyat ve kelime blokları bu dosyada yoktur; markaya bu dosya gönderilir.
 
-Teslimde iki dosyanın yolunu ve eklenen sayfa adını yaz. Markanın Internal dosyası sonraki ayların son 6 ay kontrolünde otomatik okunur; ayrı bir geçmiş kaydı tutmaya gerek yok.
+Teslimde iki dosyanın bağlantısını (çalışma klasöründeki kısayol + asıl konum) ve eklenen sayfa adını yaz. Markanın Internal dosyası sonraki ayların son 6 ay kontrolünde otomatik okunur; ayrı bir geçmiş kaydı tutmaya gerek yok.
 
 ## Marka profili
 

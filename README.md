@@ -67,7 +67,7 @@ ya da doğrudan yazın: "Dagi için Kasım backlink çalışması hazırla". Plu
 3. Son 6 ayda bu marka için çalışılan siteler (ay + domain listesi)
 4. Daha önce yapılmış backlink çalışması Excel'i (varsa dosya yolu)
 
-Plan sohbette tablo olarak gelir ve aynı anda Internal + Shared Excel'ler oluşturulup bilgisayarınızda açılır. Revize isterseniz Excel'deki ayın sayfası güncellenip yeniden açılır.
+Plan sohbette tam tablo olarak gelir; aynı anda Internal + Shared Excel'ler oluşturulup açılır ve Claude Code'u açtığınız klasöre bu dosyaların kısayolları konur. Revize isterseniz Excel'deki ayın sayfası güncellenip yeniden açılır.
 
 ## Çıktılar
 
@@ -83,7 +83,8 @@ o sayfa güncellenir.
 **Inbound Notu** her sitenin neden seçildiğini anlatır, ör. "Moda > Kombin kategorisi bulunmaktadır;
 aylık ~3,1K organik trafik; 'bordo elbise kombin' sorgusunda 2. sırada; 3 link tek ücret."
 
-Ara dosyalar `~/Documents/Backlink Finder/<Marka>/calisma/<Ay_Yıl>/` altında tutulur.
+Ara dosyalar `~/Documents/Backlink Finder/<Marka>/calisma/<Ay_Yıl>/` altında tutulur. Çalıştığınız klasördeki
+`<Marka>_Backlink_*.xlsx` kısayolları bu asıl dosyaları açar; orada yaptığınız düzenlemeler asıl dosyaya kaydedilir.
 
 ## Nasıl seçiyor
 
