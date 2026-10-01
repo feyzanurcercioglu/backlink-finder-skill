@@ -1,0 +1,12 @@
+{
+  "name": "inbound-seo",
+  "description": "Inbound Digital SEO ekibinin Claude Code plugin'leri",
+  "owner": { "name": "Feyza Nur Çerçioğlu", "url": "https://github.com/feyzanurcercioglu" },
+  "plugins": [
+    {
+      "name": "backlink-finder",
+      "source": "./",
+      "description": "Aylık backlink planı: marka, bütçe ve son 6 ay sitelerini sorar; kelime ve site seçer; Internal + Shared Excel'e aylık sayfa yazar."
+    }
+  ]
+}

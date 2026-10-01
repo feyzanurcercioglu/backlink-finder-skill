@@ -1,11 +1,11 @@
 ---
 name: backlink-finder
-description: Inbound Digital'in aylık backlink operasyonunu yürüten Backlink Finder. Markanın o ayki bütçesi, aracı mecra Excel'i (Whitepress/Exclion/LinkRaiser sayfaları), son 6 ayda çalışılan site listesiyle; SEOmonitor'dan bir önceki ayın kelime verisini çekip sezona uygun jenerik kategori kelimelerini seçer; yalnızca menüsünde markanın dikeyiyle doğrudan eşleşen kategori (moda→Moda, teknoloji→Teknoloji) olan, Ahrefs ile doğrulanmış DR 25+, zararsız ve son 6 ayda kullanılmamış siteleri seçerek bütçeye uygun site-kelime eşleştirmesi yapar ve "Marka için Hazırlanan Format" Excel'ini üretir. Kullanıcı backlink planı, aylık backlink çalışması, link building, site eşleştirme, mecra seçimi, "X markası için ekim backlink", "bu ayın backlinkleri", "mecra listesi geldi" dediğinde veya aracı fiyat Excel'i ile geldiğinde mutlaka kullan; "backlink" kelimesi geçmese bile markaya aylık link/mecra önerisi isteniyorsa tetikle. Toxic link temizliği/disavow bu skill'in değil, toxic-backlink-disavow skill'inin işidir.
+description: Inbound Digital'in aylık backlink planını hazırlar. Kullanıcıya marka, bütçe, son 6 ayda çalışılan siteler ve önceki backlink Excel'lerini sorar; plugin'deki güncel aracı mecra listesini (Whitepress/Exclion/LinkRaiser) kullanır; SEOmonitor'dan önceki ayın verisiyle öncelik grubundaki, dalgalanan, ilk 3 dışındaki jenerik kategori kelimelerini seçer; menüsünde markanın dikeyiyle doğrudan eşleşen kategori olan, Ahrefs ile doğrulanmış DR 25+, zararsız ve son 6 ayda kullanılmamış sitelerle bütçeyi dolduran plan kurar; her site için Inbound Notu yazar ve markanın Internal + Shared Excel'ine o ayın sayfasını ekler. Backlink planı, aylık backlink çalışması, link building, site/mecra seçimi, "X markası için kasım backlink", "bu ayın backlinkleri" gibi taleplerde mutlaka kullan; "backlink" geçmese bile markaya aylık link/mecra önerisi isteniyorsa tetikle. Toxic link/disavow bu skill'in işi değildir.
 ---
 
 # Backlink Finder - Inbound Digital
 
-Her ay markalar için backlink çalışması yapılır. Bu skill o ayın planını üretir: hangi siteden, hangi kelimeye, hangi URL'e link alınacağı ve maliyeti. Çıktı, markaya iletilmeden önce ekipte kontrol edilen internal Excel'dir.
+Her ay markalar için backlink çalışması yapılır. Bu skill o ayın planını üretir: hangi siteden, hangi kelimeye, hangi URL'e link alınacağı, neden o sitenin seçildiği ve maliyeti. Çıktı, markanın iki Excel'ine o ayın sayfası olarak yazılır: **Internal** (ekip kontrolü için tam versiyon) ve **Shared** (markayla paylaşılan plan tablosu).
 
 İş akışının özü üç karara dayanır:
 1. **Hangi kelimeler?** SEOmonitor'da bir önceki ayın verisine bakılır, jenerik kategori kelimeleri seçilir.
@@ -15,65 +15,88 @@ Her ay markalar için backlink çalışması yapılır. Bu skill o ayın planın
 ## Gereksinimler
 
 - **SEOmonitor MCP** (`mcp__claude_ai_SeoMonitor__*`) - kelime, sıra, değişim, hacim, oturum verisi. Birincil ve zorunlu kaynak.
-- **Ahrefs MCP** (`mcp__ahrefs__*`) - önerilecek her sitenin DR ve trafiğini öneri anında doğrulamak (`batch-analysis`) ve zararlı site kontrolü.
-- WebFetch / web arama - aday sitelerin içerik ve uyum kontrolü.
-- Python 3 (pandas, openpyxl; `requirements.txt`). Scriptler `<skill_dizini>/scripts/` altında.
+- **Ahrefs MCP** (`mcp__ahrefs__*`) - önerilecek her sitenin DR ve trafiğini öneri anında doğrulamak (`batch-analysis`), sitenin hangi sorgularda ilk 5'te olduğunu bulmak (`site-explorer-organic-keywords`) ve zararlı site kontrolü.
+- WebFetch / web arama - aday sitelerin menü ve içerik kontrolü.
+- Python 3 + `pandas`, `openpyxl`. İlk adımda `python3 -c "import pandas, openpyxl"` ile kontrol et; eksikse `pip3 install --user pandas openpyxl` çalıştır.
 
-## Girdiler
+## Dosya konumları
 
-Her çalıştırmada şunları topla. Eksik olanı sor, varsayma; özellikle bütçe ve son 6 ay listesi her ay değişir.
+- **Plugin dizini** `${CLAUDE_PLUGIN_ROOT}`: scriptler `${CLAUDE_PLUGIN_ROOT}/scripts/`, ekipçe paylaşılan marka profilleri `${CLAUDE_PLUGIN_ROOT}/brands/`, aylık mecra listesi `${CLAUDE_PLUGIN_ROOT}/data/mecra_listesi.xlsx` (hangi ayın listesi olduğu `data/mecra_listesi.json` içinde). Bu dizin her güncellemede yeniden yazılır; **buraya hiçbir şey yazma**.
+- **Kullanıcı dizini** `~/Documents/Backlink Finder/` (yoksa oluştur):
+  - `<Marka>/<Marka>_Backlink_Internal.xlsx` ve `<Marka>/<Marka>_Backlink_Shared.xlsx` - markanın tüm aylarının Excel'leri, her ay bir sayfa ("Ekim 2026", "Kasım 2026"). Marka adı baş harfi büyük, boşluksuz (ör. `Dagi`, `Flormar`, `TurkcellPasaj`).
+  - `<Marka>/calisma/<Ay_Yıl>/` - o ayın ara dosyaları (pool.csv, candidates.csv, kw json'ları, plan.json). Revizyonlarda yeniden hesaplamak için tutulur.
+  - `_profiller/<domain_>.json` - kullanıcının oluşturduğu ya da düzelttiği marka profilleri (plugin'deki profilin önüne geçer); `_profiller/_global_blacklist.txt` - kullanıcının eklediği zararlı siteler.
 
-| Girdi | Zorunlu | Not |
-|---|---|---|
-| Marka domain'i | Evet | ör. dagi.com.tr |
-| Bütçe (TL + KDV hariç) | Evet | Her ay değişir. Marka profilindeki eski bütçeyi kullanma, sor. |
-| Aracı mecra Excel'i | Evet | Ay başında gelir; tek dosya, her sayfa bir aracı (Whitepress, Exclion, LinkRaiser). Fiyat "Markaya yansıtılacak fiyat" sütunundan alınır. |
-| DR + trafik listesi | Hayır | Aracı listelerindeki DR değerleri güncel/doğru değil. Varsayılan yol: öneriye girecek siteleri Ahrefs ile öneri anında kontrol et. Kullanıcı ayrıca güncel DR/trafik verirse (ayrı dosya ya da sayfalara eklenmiş "Güncel DR"/"Güncel Trafik" sütunları) ön eleme onunla yapılır; yine de öneri anındaki Ahrefs kontrolü yapılır. |
-| Son 6 ayda çalışılan siteler | Evet | Kullanıcı marka bazında verir (yapıştırılmış liste, txt/csv/xlsx ya da önceki ayların plan Excel'leri). Gelmediyse açıkça sor: "Son 6 ayda <marka> için çalışılan site listesini paylaşır mısın?" Listesiz devam etmek, aynı siteyi tekrar önerme riski taşır. |
-| Çalışma ayı | Hayır | Varsayılan: içinde bulunulan ay. |
-| Kullanıcının belirlediği kelimeler | Hayır | Verildiyse otomatik seçimin önüne geçer. |
-| DR aralığı | Hayır | Varsayılan min 25. Daha yüksek alt sınır istenebilir, 25'in altına ancak kullanıcı açıkça isterse inilir. |
+Aşağıdaki komutlarda `$P="${CLAUDE_PLUGIN_ROOT}"`, `$U="$HOME/Documents/Backlink Finder"`, `$W="$U/<Marka>/calisma/<Ay_Yıl>"`.
+
+## 0. Başlangıç: kullanıcıya sor
+
+Skill çağrıldığında, mesajda verilmemiş olanları **tek bir mesajda** sor (eksik olanı varsayma):
+
+1. **Hangi marka?** (domain ya da marka adı)
+2. **Bu ayın bütçesi?** (TL, KDV hariç; her ay değişir, profildeki eski bütçeyi kullanma)
+3. **Son 6 ayda bu marka için çalışılan siteler?** (ay + domain listesi yapıştırılabilir, ör. "Nisan 2026 webanne.com")
+4. **Daha önce yapılmış backlink çalışması Excel'i var mı?** Varsa dosya yolunu ister (birden fazla olabilir). Bu dosyalardan geçmiş aylarda kullanılan siteler ve kelimeler okunur.
+
+Sorarken şunları da bildir:
+- Kullanılacak mecra listesi: `data/mecra_listesi.json`'daki `kaynak` ve `kullanim_ayi` (ör. "Eylül 2026 mecra listesi, Ekim çalışmaları için"). Çalışma ayı listenin `kullanim_ayi`'ndan farklıysa uyar: "Plugin'deki liste <ay> için; güncel listeyi plugin yöneticisi yükleyene kadar bununla mı devam edelim, yoksa elinde yeni liste dosyası var mı?" Kullanıcı yeni dosya verirse o dosyayı kullan.
+- Markanın `$U/<Marka>/<Marka>_Backlink_Internal.xlsx` dosyası zaten varsa: "Önceki aylarınız (Ekim 2026, ...) bu dosyada; son 6 ayı oradan da okuyacağım, yeni ay ayrı sayfa olarak eklenecek."
+
+Opsiyonel girdiler (sorma, verilirse kullan): çalışma ayı (varsayılan içinde bulunulan ay), kullanıcının belirlediği kelimeler, DR alt sınırı (varsayılan 25; 25'in altına ancak açık talimatla inilir), güncel DR/trafik listesi.
 
 ## Akış
 
 ```
-[1] Girdileri topla → dönem tarihlerini hesapla
-[2] Mecra Excel'i → birleşik havuz (build_pool.py)
-[3] Filtre: son 6 ay, DR<25, kara liste, dil, bütçe tavanı (filter_sites.py)
-[4] SEOmonitor → önceki ayın kelimeleri → jenerik skorlama (keyword_select.py)
-[5] Kategori taraması (category_scan.py) → menü teyidi → Ahrefs DR/trafik → zararlı site kontrolü → bütçe doluluğu → kelime ataması
-[6] Planı sun, revize al
-[7] Excel export (export_excel.py) + geçmişe kayıt
+[0] Marka, bütçe, son 6 ay siteleri, önceki çalışma Excel'leri → dönem tarihleri
+[1] Geçmiş: önceki Excel'ler + markanın Internal Excel'i + kullanıcı listesi → son 6 ay (gecmis_oku.py)
+[2] Plugin'deki mecra listesi → birleşik havuz (build_pool.py)
+[3] Filtre: son 6 ay, kara listeler, dil, bütçe tavanı, DR ön eleme (filter_sites.py)
+[4] SEOmonitor → önceki ayın kelimeleri → öncelik grubu + dalgalanma + kategori (keyword_select.py)
+[5] Kategori taraması (category_scan.py) → menü teyidi → Ahrefs DR/trafik → zararlı site kontrolü
+    → Inbound Notu araştırması → bütçe doluluğu → kelime ataması
+[6] Planı sohbette sun, revize al
+[7] Onay sonrası Internal + Shared Excel'e ayın sayfasını yaz (export_excel.py)
 ```
 
-**Dosya konumları:**
-- `<skill_dizini>`: skill yüklendiğinde verilen "Base directory" (kurulumda `~/.claude/skills/backlink-finder`). Scriptler `<skill_dizini>/scripts/`, marka profilleri `<skill_dizini>/brands/` altındadır.
-- Çalışma dosyaları (pool.csv, candidates.csv, kw json'ları, plan.json) ve Excel çıktısı kullanıcının o anki çalışma klasöründe `calisma/<marka>_<Ay_Yıl>/` altında tutulur, skill dizinine yazılmaz; böylece revizyonlarda yeniden hesaplanabilir ve skill `git pull` ile sorunsuz güncellenir.
+### 1. Dönem ve geçmiş
 
-### 1. Dönem
+Çalışma ayı X ise SEOmonitor verisi **bir önceki takvim ayının 1'i ile son günü** arasındadır. Ekim çalışması → 1-30 Eylül; Mart çalışması → 1-28/29 Şubat. Excel sayfa adı çalışma ayıdır ("Ekim 2026"), veri dönemi değil. Kullanıcıya hangi dönemi kullandığını ilk planda yaz.
 
-Çalışma ayı X ise SEOmonitor verisi **bir önceki takvim ayının 1'i ile son günü** arasındadır. Ekim çalışması → 1-30 Eylül; Mart çalışması → 1-28/29 Şubat. Plan Excel'inin sayfa adı ve dosya adı çalışma ayıdır ("Ekim 2026"), veri dönemi değil. Kullanıcıya hangi dönemi kullandığını ilk mesajda yaz.
+Son 6 ay listesi üç kaynağın birleşimidir:
+1. Kullanıcının yapıştırdığı liste → `$W/son6ay_kullanici.txt` (her satıra bir domain).
+2. Kullanıcının verdiği önceki çalışma Excel'leri ve markanın kendi Internal Excel'i:
+   ```bash
+   python3 "$P/scripts/gecmis_oku.py" --files "<önceki.xlsx>" "$U/<Marka>/<Marka>_Backlink_Internal.xlsx" \
+     --month "<Ay Yıl>" --brand-domain <domain> --out "$W/son6ay_excel.txt"
+   ```
+   Script sayfa adından ayı okur ("Ekim 2026", "Ekim24", "Mart 2026"); ayı anlaşılamayan sayfaları raporlar, onları kullanıcıya sor.
+3. İki liste arasında fark varsa (Excel'de var, kullanıcının listesinde yok ya da tersi) kullanıcıya göster; ikisini de hariç tutmak varsayılandır.
+
+Önceki Excel'lerdeki kelimeler de faydalıdır: son aylarda hangi kelimeye kaç kez link alındığını görmek için oku (SEOmonitor'daki "Backlink 2026 > ..." gruplarıyla birlikte).
 
 ### 2. Havuz
 
 ```bash
-python <skill_dizini>/scripts/build_pool.py "<mecra_excel>.xlsx" [--metrics "<dr_trafik_listesi>.xlsx"] --out calisma/<marka>_<Ay_Yıl>/pool.csv
+python3 "$P/scripts/build_pool.py" "$P/data/mecra_listesi.xlsx" [--metrics "<dr_trafik_listesi>.xlsx"] --out "$W/pool.csv"
 ```
 
-**DR ve trafik kaynağı:** Aracıların listelerinde yazan DR'lar doğru değil; nihai karar her zaman öneri anında Ahrefs'ten çekilen DR/trafikle verilir. Ön eleme için öncelik sırası: `--metrics` dosyası > sayfada kullanıcının eklediği sütun (adında "güncel" geçen ya da aynı sayfada birden fazla DR/trafik sütunu varsa en sağdaki) > yok. Aracının kendi DR'ı `dr_list` sütununda sadece referans olarak kalır. Rapordaki "DR: ... / trafik: ..." kısmında hangi sütunun kullanıldığı yazar; yanlış sütun seçildiyse kullanıcıya sor. "DR/trafik dosyası: X domain, havuzla eşleşen Y" satırında eşleşme düşükse domain yazımlarını kontrol et.
+Kullanıcı kendi mecra dosyasını verdiyse `$P/data/mecra_listesi.xlsx` yerine onu kullan.
 
-Script her sayfayı bir aracı kabul eder, sütunları esnek eşleştirir (domain, DR, "Markaya yansıtılacak fiyat", net fiyat, not/link sayısı) ve aynı domain birden fazla aracıda varsa en düşük markaya yansıtılacak fiyatlı kaydı tutar. Rapordaki "atlandı" satırlarına bak: bir sayfanın fiyat sütunu bulunamadıysa sütun adlarını kullanıcıya göster ve hangisinin fiyat olduğunu sor. Fiyatı asla tahmin etme veya hesaplama; markaya yansıtılacak fiyat sadece Excel'den gelir.
+**DR ve trafik kaynağı:** Aracıların listelerinde yazan DR'lar doğru değil; nihai karar her zaman öneri anında Ahrefs'ten çekilen DR/trafikle verilir. Ön eleme için öncelik sırası: `--metrics` dosyası > sayfada kullanıcının eklediği sütun (adında "güncel" geçen ya da aynı sayfada birden fazla DR/trafik sütunu varsa en sağdaki) > yok. Aracının kendi DR'ı `dr_list` sütununda sadece referans olarak kalır.
+
+Script her sayfayı bir aracı kabul eder, sütunları esnek eşleştirir (domain, DR, "Markaya yansıtılacak fiyat" / "% Eklenen Fiyat", net fiyat, not/link sayısı) ve aynı domain birden fazla aracıda varsa en düşük markaya yansıtılacak fiyatlı kaydı tutar. Rapordaki "atlandı" satırlarına bak: bir sayfanın fiyat sütunu bulunamadıysa sütun adlarını kullanıcıya göster ve hangisinin fiyat olduğunu sor. Fiyatı asla tahmin etme veya hesaplama; markaya yansıtılacak fiyat sadece Excel'den gelir.
 
 Link sayısı notlardan okunur ("2 link", "3 bağlantı"); okunamazsa 1 kabul edilir. Fazladan link sözü olmayan siteye birden fazla kelime atamak, aracıyla sorun çıkarır.
 
 ### 3. Filtre
 
 ```bash
-python <skill_dizini>/scripts/filter_sites.py --pool pool.csv --exclude son6ay.txt --budget <bütçe> \
-  --dr-min 25 --avoid <skill_dizini>/brands/<domain_>.json --out candidates.csv
+python3 "$P/scripts/filter_sites.py" --pool "$W/pool.csv" --exclude "$W/son6ay_kullanici.txt" "$W/son6ay_excel.txt" \
+  --budget <bütçe> --dr-min 25 --avoid "<profil.json>" \
+  --blacklist "$P/brands/_global_blacklist.txt" "$U/_profiller/_global_blacklist.txt" --out "$W/candidates.csv"
 ```
 
-Kullanıcının verdiği son 6 ay listesini önce bir dosyaya yaz (her satıra bir domain, ya da gelen xlsx'i doğrudan ver). Script domain'leri normalize eder (https, www, alt sayfa, sondaki / temizlenir), böylece `https://www.site.com/yazi` ile `site.com` eşleşir. Rapordaki elenme sayılarını kullanıcıya aynen aktar; "son 6 ay nedeniyle 14 site elendi" bilgisi kontrol için önemli.
+Script domain'leri normalize eder (https, www, alt sayfa, sondaki / temizlenir), böylece `https://www.site.com/yazi` ile `site.com` eşleşir. Rapordaki elenme sayılarını kullanıcıya aynen aktar; "son 6 ay nedeniyle 14 site elendi" bilgisi kontrol için önemli.
 
 Kullanıcı DR vermediyse script aracı DR'ını (`dr_list`) sadece kaba ön eleme için 5 puan toleransla kullanır ve bu siteleri `dr_verified=False` işaretler. Bu siteler Ahrefs ile doğrulanmadan önerilmez (bkz. 5. adım).
 
@@ -89,8 +112,8 @@ Kullanıcı bir trafik alt sınırı belirtirse `--traffic-min <değer>` ekle; b
 5. **Dalgalanma:** `seomonitor_get_daily_keyword_ranks` ile öncelik grubunun (`group_id`) dönem içi günlük sıralarını çek (yanıt büyüktür, dosyadan Python ile oku). Primary device için her kelimenin min/max sırasını, aralığını (max-min) ve gün gün sıra değişim sayısını hesapla, `volatility.json` olarak kaydet (`{"boxer": {"min": 5, "max": 19, "range": 14, "moves": 21, ...}}`).
 
 ```bash
-python <skill_dizini>/scripts/keyword_select.py --in kw_raw.json --brand "<marka>,<marka varyasyonu>" --top 20 \
-  --profile <skill_dizini>/brands/<domain_>.json --volatility volatility.json --out kw_scored.json
+python3 "$P/scripts/keyword_select.py" --in "$W/kw_raw.json" --brand "<marka>,<marka varyasyonu>" --top 20 \
+  --profile "<profil.json>" --volatility "$W/volatility.json" --out "$W/kw_scored.json"
 ```
 
 **Öncelik sırası (kelime seçerken):**
@@ -124,8 +147,8 @@ Kaç kelime gerektiği bütçeden çıkar: seçilen sitelerin toplam link kapasi
 
 1. **Toplu tarama (script):** Filtreden geçen tüm adayların ana sayfasını paralel indirip menü/kategori linklerinde dikeyin terimlerini arar (~600 site yaklaşık 1 dakika). Domain adına veya aracı temasına göre ön eleme yapma; Flormar denemesinde uygun sitelerin çoğu "haber", "Var", "Karma" temalı çıktı.
    ```bash
-   python <skill_dizini>/scripts/category_scan.py --in candidates.csv --terms "guzellik,makyaj,cilt-bakimi,kozmetik" \
-     --max-price <bütçe - mevcut plan - 750> --out category_hits.csv
+   python3 "$P/scripts/category_scan.py" --in "$W/candidates.csv" --terms "guzellik,makyaj,cilt-bakimi,kozmetik" \
+     --max-price <bütçe - mevcut plan - 750> --out "$W/category_hits.csv"
    ```
    Terimleri Türkçe karakterleri sadeleştirerek yaz (moda markası: `moda,giyim,stil,kombin`; teknoloji: `teknoloji,bilim-teknoloji,mobil`). Çıktıdaki `matches` sütununda tek bir yazı URL'i (ör. `/flormardan-yeni-koleksiyon...`) kategori değildir; `/kategori/guzellik/`, `/guzellik-bakim/`, `/moda-ve-guzellik` gibi kategori yolları adaydır. `bahis_sinyali` doluysa site ana sayfasında bahis/casino terimleri geçiyor demektir; ele ya da WebFetch ile bak.
 2. **Menü teyidi (WebFetch):** Script'in bulduğu ve Ahrefs kontrolünden geçen adaylar için menüde gerçekten bu kategori var mı bak ve kategori adını birebir kaydet. Köşe yazısı, etiket sayfası ya da sayfa içi blok kategori sayılmaz (ör. egehaber "Güzellik ve Bakım Köşesi" bir yazar köşesi). Site WebFetch'e 403 dönüyor ya da açılmıyorsa menüsü doğrulanamaz; önerme (ör. birmilyonnokta.com). Kategori var ama sitenin ana konusu çok farklıysa (ör. örgü sitesi mimuu.com'da "Güzellik-Bakım") ya da kategoride neredeyse içerik yoksa (ör. doktorumnedio.com Güzellik'te 3 yazı) bunu sunumda belirt ve daha güçlü eşleşmeyi tercih et.
@@ -169,7 +192,7 @@ Bütçe aralığında kategorisi eşleşen site azsa önce aşağıdaki "Bütçe
 3. Ahrefs `site-explorer-outlinks-stats` / `linked-domains`: dış link verdiği domain sayısı içerik hacmine göre çok yüksekse link çiftliği.
 4. Siteye WebFetch ile göz at: ana sayfa ve "sponsorlu/misafir yazı" sayfalarında alakasız konularda yoğun yazı, spin içerik, gizli bahis linkleri, hacklenmiş görüntü varsa ele.
 
-Elenen her site için kısa gerekçe yaz ve kullanıcıya "`<skill_dizini>/brands/_global_blacklist.txt` dosyasına ekleyeyim mi?" diye sor; zararlı site marka fark etmeksizin zararlıdır. Sadece bu markayla uyumsuzsa marka profilinin `avoid_sites` alanı önerilir.
+Elenen her site için kısa gerekçe yaz ve kullanıcıya "yerel kara listeye (`$U/_profiller/_global_blacklist.txt`) ekleyeyim mi?" diye sor; eklenen siteleri plugin yöneticisine de iletmesini öner ki ortak listeye girsin; zararlı site marka fark etmeksizin zararlıdır. Sadece bu markayla uyumsuzsa marka profilinin `avoid_sites` alanı önerilir.
 
 **Uyum kontrolü:** Domain adı ve kategoriden sitenin gerçek konusunu tahmin etme, doğrula (WebFetch / web arama). Örnek çıktı:
 ```
@@ -186,6 +209,16 @@ Elenen her site için kısa gerekçe yaz ve kullanıcıya "`<skill_dizini>/brand
 ```
 Uyumsuz/zararlı çıkan sitenin yerine havuzdan sıradaki uygun siteyi al ve aynı kontrollerden geçir.
 
+**Inbound Notu (her site için zorunlu):** Plan tablosunda her sitenin yanında, o sitenin neden seçildiğini anlatan 1-2 cümlelik not yer alır; hem Internal'da hem Shared'da görünür, yani markanın da okuyacağı bir gerekçedir. Somut ve doğrulanmış verilerden kur, genel övgü yazma:
+- **Kategori:** eşleşen menü kategorisi ("Moda > Kombin kategorisi bulunmaktadır").
+- **Trafik/DR:** Ahrefs'ten o gün çekilen değer ("aylık ~10,7K organik trafik, DR 48").
+- **Sorgu gücü:** sitenin markanın konusuyla ilgili bir sorguda ilk 5'te olması. `mcp__ahrefs__site-explorer-organic-keywords` ile (`target` = site, `country: tr`, `select: keyword,best_position,volume,best_position_url`, `where` ile `best_position <= 5`, hacme göre azalan, limit 50) çek; markanın kategorileriyle ilgili en yüksek hacimli 1-2 sorguyu seç ("'kombin önerileri' sorgusunda 3. sırada"). İlgili sorgu bulunmazsa bu kısmı yazma, uydurma.
+- Varsa ek artı: çok link verip tek ücret alması ("3 link tek ücret"), kategori sayfasında uzun süre yayında kalması (aracı notundan).
+
+Örnek: "Moda > Kombin kategorisi bulunmaktadır; aylık ~3,1K organik trafik; 'bordo elbise kombin' sorgusunda 2. sırada; 3 link tek ücret."
+
+Marka ile paylaşıldığı için fiyat, marj, aracı adı ve PBN/eleme gibi iç değerlendirmeleri bu nota yazma.
+
 ### 6. Sunum ve revize
 
 Kullanıcıya önce özet, sonra tablo:
@@ -195,7 +228,7 @@ Dagi - Ekim 2026 backlink planı (veri: 1-30 Eylül 2026, SEOmonitor)
 Bütçe: 20.000 TL | Plan: 19.350 TL + KDV (6 site × 750 içerik dahil)
 Havuz: 1.054 site → son 6 ay: -13, fiyat: -443, kategori eşleşmesi yok: -..., PBN/zararlı: -..., DR<25 (Ahrefs): -... → N uygun aday
 
-| Domain | DR (Ahrefs) | Trafik (Ahrefs) | Site Ücreti | İçerik | Keyword | Link verilecek URL (marka) | Mecra | Yayın kategorisi (ad + URL) |
+| Domain | DR (Ahrefs) | Trafik (Ahrefs) | Site Ücreti | İçerik | Keyword | Link verilecek URL (marka) | Yayın kategorisi (ad + URL) | Inbound Notu |
 ...
 Seçilen kelimeler: | Keyword | Ana kategori | Hacim | Rank | Değişim | Ay içi aralık (dalgalanma) | Landing | Oturum |
 Elenen sezonluk kelimeler, elenen siteler (gerekçeli: kategori yok / PBN / DR) ve yedek aday listesi (sadece kategorisi eşleşen siteler; bütçe dışı olanlar fiyatıyla)
@@ -205,29 +238,32 @@ Tabloda her kelimenin **link verilecek URL'i** (markanın kategori sayfası, tam
 
 Ardından sor: "Değiştirmek istediğin site/kelime var mı, yoksa Excel'i çıkarayım mı?" Revizede bütçeyi ve son 6 ay kuralını yeniden kontrol et.
 
-claude.ai'da çalışılıyorsa ve kullanıcı isterse planı interaktif panel olarak da sunabilirsin; panel tasarımı `references/widget.md` dosyasında.
+claude.ai'da çalışılıyorsa ve kullanıcı isterse planı interaktif panel olarak da sunabilirsin; panel tasarımı `${CLAUDE_PLUGIN_ROOT}/references/widget.md` dosyasında.
 
-### 7. Excel export
+### 7. Excel export (Internal + Shared, aylık sayfa)
 
-Planı JSON'a yaz (şema `scripts/export_excel.py` başında) ve çalıştır:
+Planı `$W/plan.json`'a yaz (şema `scripts/export_excel.py` başında; her sitede `inbound_note`, `category`, `category_url` dolu olmalı) ve çalıştır:
 
 ```bash
-python <skill_dizini>/scripts/export_excel.py plan.json --out "backlink_plan_<marka>_<Ay_Yıl>.xlsx"
+python3 "$P/scripts/export_excel.py" "$W/plan.json" \
+  --internal "$U/<Marka>/<Marka>_Backlink_Internal.xlsx" \
+  --shared   "$U/<Marka>/<Marka>_Backlink_Shared.xlsx"
 ```
 
-Çıktı, "Marka için Hazırlanan Format" ile aynıdır; tek sayfa, adı çalışma ayı ("Ekim 2026"):
+Her marka için iki kalıcı dosya vardır; her çalışma ayı bu dosyalara **yeni bir sayfa** olarak eklenir ("Ekim 2026", sonra "Kasım 2026"...). Dosya yoksa oluşturulur. Aynı ayın sayfası zaten varsa (revizyon) yalnızca o sayfa yeniden yazılır, diğer aylara dokunulmaz. Sayfalar kronolojik sıralanır.
 
-1. **Plan tablosu (markaya giden):** Domain | DR | Site Ücreti | İçerik Ücreti | Keyword | URL | İçerik | Yayınlanan Link. Her site renkli blok (sarı/mavi dönüşümlü); çok linkli sitelerde Domain, DR, ücretler, İçerik ve Yayınlanan Link hücreleri birleşik. URL `=HYPERLINK("https://www.marka.com/yol", "/yol")`. İçerik ve Yayınlanan Link boş bırakılır (yazım ve yayın sonrası ekip doldurur). Altında "Total: X TL + KDV" (site ücretleri + içerik ücretleri).
-2. **Internal fiyat tablosu:** Domain | DR | net fiyat | %20 fiyat (markaya yansıtılan) | Mecra | Not ("2 link") | Yayın Kategorisi (eşleşen kategori adı, kategori URL'ine linkli).
+**Internal** (ekip içi, tam versiyon) - sayfada üç blok:
+1. **Plan tablosu:** Domain | DR | Site Ücreti | İçerik Ücreti | Keyword | URL | İçerik | Yayınlanan Link | Inbound Notu. Her site renkli blok (sarı/mavi dönüşümlü); çok linkli sitelerde Domain, DR, ücretler, İçerik, Yayınlanan Link ve Inbound Notu hücreleri birleşik. URL `=HYPERLINK("https://www.marka.com/yol", "/yol")`. İçerik ve Yayınlanan Link boş bırakılır (yazım ve yayın sonrası ekip doldurur). Altında "Total: X TL + KDV".
+2. **Fiyat tablosu:** Domain | DR | net fiyat | %20 fiyat (markaya yansıtılan) | Mecra | Not ("2 link") | Yayın Kategorisi (kategori URL'ine linkli).
 3. **Kelime tablosu:** Keyword | Volume | Rank | Change | Landing Page | Sessions (SEOmonitor, veri dönemi).
 
-Blok 2 ve 3 internaldir; markaya iletilmeden önce ekip tarafından kaldırılır. Bunu kullanıcıya teslimde hatırlat.
+**Shared** (markayla paylaşılan) - sayfada yalnızca 1. blok (plan tablosu + Inbound Notu + Total). Fiyat ve kelime blokları bu dosyada yoktur; markaya bu dosya gönderilir.
 
-Export sonrası seçilen siteleri `<skill_dizini>/brands/<domain_>_gecmis.csv` dosyasına `ay,domain` olarak ekle. Kullanıcının verdiği son 6 ay listesi esas kaynaktır; bu dosya sadece çapraz kontrol içindir: listede olmayıp geçmiş dosyasında son 6 ay içinde görünen bir site varsa kullanıcıya sor.
+Teslimde iki dosyanın yolunu ve eklenen sayfa adını yaz. Markanın Internal dosyası sonraki ayların son 6 ay kontrolünde otomatik okunur; ayrı bir geçmiş kaydı tutmaya gerek yok.
 
 ## Marka profili
 
-`<skill_dizini>/brands/<domain_>.json` (ör. `brands/dagi_com_tr.json`, `brands/flormar_com_tr.json`). Profiller repoda ekipçe paylaşılır; yeni marka profili oluşturduğunda ya da birini güncellediğinde kullanıcıya "profili repoya da gönderelim mi?" diye hatırlat ki ekip aynı bilgiyle çalışsın. Yoksa ilk çalıştırmada markanın menüsünü ve SEOmonitor gruplarını inceleyip dikeyi, eşleşen site kategorilerini, öncelik gruplarını, ana/yan kategorileri ve sezonları çıkar; kullanıcıya onaylat, kaydet. Varsa her çalıştırmada kullan, kullanıcı düzeltirse güncelle.
+Profil arama sırası: önce `$U/_profiller/<domain_>.json` (kullanıcının yerel profili), yoksa `$P/brands/<domain_>.json` (plugin'le gelen ortak profil; ör. `dagi_com_tr.json`, `flormar_com_tr.json`). Plugin dizinine yazılmaz: yeni profil oluşturduğunda ya da ortak profili düzelttiğinde `$U/_profiller/` altına kaydet ve kullanıcıya "bu profili plugin yöneticisine ilet, ortak listeye eklensin" diye hatırlat. Profil yoksa ilk çalıştırmada markanın menüsünü ve SEOmonitor gruplarını inceleyip dikeyi, eşleşen site kategorilerini, öncelik gruplarını, ana/yan kategorileri ve sezonları çıkar; kullanıcıya onaylat, kaydet. Varsa her çalıştırmada kullan, kullanıcı düzeltirse güncelle.
 
 ```json
 {
@@ -261,7 +297,9 @@ Bütçe profile yazılmaz; her ay sorulur.
 5. **Fiyat** sadece "Markaya yansıtılacak fiyat" sütunundan; içerik site başına 750 TL. Toplam bütçeyi aşmaz ve en az ~%87'sini kullanır.
 6. **İlk 3'teki kelimeler** (dönem sonu sıra 1-3) seçilmez. **Kelimeler** markanın öncelikli gruplarından ve ana menü kategorilerinden seçilir; önce dalgalanan, sonra çekirdek kategori kelimeleri gelir; yan kategori kelimeleri (aksesuar vb.) seçilmez. Kelimeler SEOmonitor'dan, çalışma ayından önceki takvim ayı verisiyle. Jenerik kategori kelimeleri öncelikli, brand kelimeler hariç. Çalışma ayının sezonuna uymayan kategoriler alınmaz. Sıra/hacim asla tahmin edilmez; SEOmonitor'a erişilemezse kullanıcıdan export iste.
 7. **Dil:** TR markada yabancı dil (EN) sayfasındaki siteler elenir.
-8. **Çıktı dili** Türkçe; em dash yerine tire kullan.
+8. **Inbound Notu** her sitede zorunlu; doğrulanmış kategori, trafik ve ilk 5 sorgu bilgisinden kurulur, fiyat/aracı/iç değerlendirme içermez.
+9. **Çıktı** markanın `~/Documents/Backlink Finder/<Marka>/` altındaki Internal ve Shared Excel'lerine ayın sayfası olarak yazılır; plugin dizinine hiçbir şey yazılmaz.
+10. **Çıktı dili** Türkçe; em dash yerine tire kullan.
 
 ## Hata durumları
 
@@ -269,4 +307,6 @@ Bütçe profile yazılmaz; her ay sorulur.
 - **Mecra Excel'inde fiyat sütunu tanınmadı:** Sütun adlarını göster, sor.
 - **Bütçe dolmuyor:** Önce "Bütçe doluluğu" adımlarını uygula (tüm havuzda kategori taraması dahil). Yine dolmuyorsa elenme dökümünü göster ve kural esnetme seçeneklerini sor; yarı boş planı kendiliğinden sunma.
 - **Bütçe yetmiyor / aday çok az:** Kaç sitenin elendiğini aşama aşama göster, alternatif sun (DR üst sınırını açmak, bütçe artışı, link sayısı fazla sitelere yönelmek). DR 25 alt sınırını ve son 6 ay kuralını kendiliğinden gevşetme.
-- **Son 6 ay listesi gelmedi:** Sor; kullanıcı "yok/ilk ay" derse geçmiş dosyasını kontrol edip devam et.
+- **Mecra listesi eski ay için:** `data/mecra_listesi.json`'daki `kullanim_ayi` çalışma ayından farklıysa kullanıcıya söyle; yeni dosya verirse onu kullan, yoksa onayıyla mevcut listeyle devam et.
+- **Excel dosyası açık/kilitli:** Kaydetme hatası alınırsa kullanıcıdan Excel'i kapatmasını iste ve tekrar çalıştır.
+- **Son 6 ay listesi gelmedi:** Sor; kullanıcı "yok/ilk ay" derse markanın Internal Excel'ini ve verdiği önceki çalışma Excel'lerini kontrol edip devam et.

@@ -1,0 +1,9 @@
+{
+  "name": "backlink-finder",
+  "version": "1.0.0",
+  "description": "Inbound Digital aylık backlink planı: SEOmonitor kelime seçimi, kategori eşleşen site seçimi, Ahrefs doğrulama, marka bazlı Internal + Shared Excel (her ay yeni sayfa).",
+  "author": { "name": "Feyza Nur Çerçioğlu", "url": "https://github.com/feyzanurcercioglu" },
+  "homepage": "https://github.com/feyzanurcercioglu/backlink-finder-skill",
+  "repository": "https://github.com/feyzanurcercioglu/backlink-finder-skill",
+  "keywords": ["seo", "backlink", "link-building", "seomonitor", "ahrefs", "inbound"]
+}

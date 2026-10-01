@@ -51,7 +51,7 @@ def read_exclude(path):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--pool', required=True)
-    ap.add_argument('--exclude', help='Son 6 ay çalışılan siteler (txt/csv/xlsx)')
+    ap.add_argument('--exclude', nargs='*', default=[], help='Son 6 ay çalışılan siteler (txt/csv/xlsx), birden fazla dosya olabilir')
     ap.add_argument('--budget', type=float, required=True)
     ap.add_argument('--dr-min', type=int, default=25)
     ap.add_argument('--dr-max', type=int, default=100)
@@ -59,7 +59,8 @@ if __name__ == '__main__':
     ap.add_argument('--list-tolerance', type=int, default=5, help='Aracı DR\'ı ile ön elemede tolerans')
     ap.add_argument('--traffic-min', type=float, default=0, help='Opsiyonel trafik alt sınırı (kullanıcı belirlerse)')
     ap.add_argument('--avoid', help='Marka profili JSON (avoid_sites alanı okunur)')
-    ap.add_argument('--blacklist', default=os.path.join(os.path.dirname(__file__), '..', 'brands', '_global_blacklist.txt'))
+    ap.add_argument('--blacklist', nargs='*', default=[os.path.join(os.path.dirname(__file__), '..', 'brands', '_global_blacklist.txt')],
+                    help='Bir veya daha fazla kara liste dosyası (plugin + kullanıcının yerel listesi)')
     ap.add_argument('--out', default='candidates.csv')
     a = ap.parse_args()
 
@@ -67,7 +68,9 @@ if __name__ == '__main__':
     df['domain'] = df['domain'].map(norm_domain)
     log = [f'Başlangıç: {len(df)} unique domain']
 
-    excl = read_exclude(a.exclude)
+    excl = set()
+    for ex in a.exclude:
+        excl |= read_exclude(ex)
     hit = df['domain'].isin(excl)
     log.append(f'- Son 6 ay listesi ({len(excl)} domain): {hit.sum()} site elendi')
     df = df[~hit]
@@ -75,7 +78,8 @@ if __name__ == '__main__':
     avoid = set()
     if a.avoid and os.path.exists(a.avoid):
         avoid |= {norm_domain(d) for d in json.load(open(a.avoid, encoding='utf-8')).get('avoid_sites', [])}
-    avoid |= read_exclude(a.blacklist)
+    for bl in a.blacklist:
+        avoid |= read_exclude(bl)
     hit = df['domain'].isin(avoid)
     log.append(f'- avoid_sites + global kara liste: {hit.sum()} site elendi')
     df = df[~hit]

@@ -1,35 +1,39 @@
-"""Onaylanan backlink planını "Marka için Hazırlanan Format" Excel'ine yazar.
+"""Onaylanan backlink planını markanın Internal ve Shared Excel'lerine aylık sayfa olarak yazar.
 
 Kullanım:
-    python export_excel.py plan.json [--out backlink_plan_dagi_Ekim_2026.xlsx]
+    python export_excel.py plan.json --internal "<Marka>_Backlink_Internal.xlsx" --shared "<Marka>_Backlink_Shared.xlsx"
+
+Dosya yoksa oluşturulur; varsa açılır ve çalışma ayı adında (ör. "Kasım 2026") yeni sayfa eklenir.
+Aynı ayın sayfası zaten varsa (revizyon) silinip yeniden yazılır; diğer ayların sayfalarına dokunulmaz.
 
 plan.json:
 {
-  "brand_domain": "dagi.com.tr",
-  "brand_name": "dagi",
-  "month_year": "Ekim 2026",
+  "brand_domain": "dagi.com.tr", "brand_name": "dagi", "month_year": "Ekim 2026",
   "sites": [
-    {"domain": "maksatbilgi.com", "dr": 35, "site_price": 3550, "net_price": 2823.25,
-     "content_price": 750, "source": "whitepress", "link_count": 3,
-     "category": "Eğlence > Moda", "category_url": "https://site.com/kategori/moda/",
-     "keywords": [{"kw": "gecelik", "url": "/collections/kadin-gecelik-modelleri"}, ...]}
+    {"domain": "annelertoplandik.com", "dr": 33, "traffic": 383197, "site_price": 4550, "net_price": 3789.25,
+     "content_price": 750, "source": "Whitepress",
+     "category": "Eğlence > Moda", "category_url": "https://annelertoplandik.com/blog/category/eglence/moda/",
+     "inbound_note": "Eğlence > Moda kategorisi var; aylık ~383K organik trafik; 'bebek kıyafetleri' sorgusunda 2. sırada",
+     "keywords": [{"kw": "kadın pijama takımı", "url": "/collections/kadin-pijama-takimi-modelleri"}]}
   ],
-  "keywords": [
-    {"kw": "gecelik", "volume": 33100, "rank": 6, "change": -2,
-     "url": "/collections/kadin-gecelik-modelleri", "sessions": 351}
-  ]
+  "keywords": [{"kw": "kadın pijama takımı", "volume": 12100, "rank": 8, "change": -3,
+                "url": "/collections/kadin-pijama-takimi-modelleri", "sessions": null}]
 }
 
-Sheet yapısı (tek sheet, adı "Ay Yıl"):
-  Blok 1 - Markaya giden plan: Domain | DR | Site Ücreti | İçerik Ücreti | Keyword | URL | İçerik | Yayınlanan Link
-           Site başına renkli blok (sarı / mavi dönüşümlü), A-D ve G-H birleştirilmiş, altta "Total: X TL + KDV".
-  Blok 2 - Internal fiyat tablosu: Domain | DR | net fiyat | %20 fiyat | Mecra | Not | Yayın Kategorisi (eşleşen kategori, linkli)
-  Blok 3 - Keyword verisi (SEOmonitor): Keyword | Volume | Rank | Change | Landing Page | Sessions
+Sayfa yapısı:
+  Blok 1 (Internal + Shared) - Plan: Domain | DR | Site Ücreti | İçerik Ücreti | Keyword | URL | İçerik |
+           Yayınlanan Link | Inbound Notu. Site başına renkli blok, çok linkli sitede A-D, G-I birleşik,
+           altta "Total: X TL + KDV".
+  Blok 2 (sadece Internal) - Fiyat: Domain | DR | net fiyat | %20 fiyat | Mecra | Not | Yayın Kategorisi
+  Blok 3 (sadece Internal) - Kelime (SEOmonitor): Keyword | Volume | Rank | Change | Landing Page | Sessions
 """
 import argparse
 import json
 
-from openpyxl import Workbook
+import os
+import re
+
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 THIN = Side(border_style='thin', color='000000')
@@ -75,21 +79,19 @@ def style(c, fill=None, fmt=None, align=CENTER, color=None):
     c.border = BORDER
 
 
-def export(plan, out):
+def write_sheet(ws, plan, internal=True):
     base = 'https://www.' + plan['brand_domain'].replace('https://', '').replace('www.', '').strip('/')
-    wb = Workbook()
-    ws = wb.active
-    ws.title = plan['month_year']
 
-    # ---- Blok 1: markaya giden plan
-    header(ws, 1, ['Domain', 'DR', 'Site Ücreti', 'İçerik Ücreti', 'Keyword', 'URL', 'İçerik', 'Yayınlanan Link'], '666666')
+    # ---- Blok 1: plan (Internal + Shared)
+    header(ws, 1, ['Domain', 'DR', 'Site Ücreti', 'İçerik Ücreti', 'Keyword', 'URL', 'İçerik', 'Yayınlanan Link',
+                   'Inbound Notu'], '666666')
     row, total = 2, 0
     for idx, s in enumerate(plan['sites']):
         fill = SITE_FILLS[idx % 2]
         kws = s['keywords'] or [{'kw': '', 'url': ''}]
         start = row
         for k in kws:
-            for col in range(1, 9):
+            for col in range(1, 10):
                 style(ws.cell(row=row, column=col), fill=fill)
             ws.cell(row=row, column=5, value=k['kw'])
             if k['url']:
@@ -101,9 +103,11 @@ def export(plan, out):
         ws.cell(row=start, column=2, value=s['dr'])
         ws.cell(row=start, column=3, value=s['site_price']).number_format = '#,##0'
         ws.cell(row=start, column=4, value=s.get('content_price', 750)).number_format = '#,##0'
+        note = ws.cell(row=start, column=9, value=s.get('inbound_note'))
+        note.alignment = Alignment(vertical='center', wrap_text=True)
         total += s['site_price'] + s.get('content_price', 750)
         if end > start:
-            for col in (1, 2, 3, 4, 7, 8):
+            for col in (1, 2, 3, 4, 7, 8, 9):
                 ws.merge_cells(start_row=start, start_column=col, end_row=end, end_column=col)
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
     c = ws.cell(row=row, column=1, value=f'Total: {tr_num(total)} TL + KDV')
@@ -111,6 +115,11 @@ def export(plan, out):
         style(ws.cell(row=row, column=col), fill='666666')
     c.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
     c.alignment = Alignment(horizontal='right', vertical='center')
+    widths = [22, 8, 12, 12, 18, 40, 28, 40, 60]
+    if not internal:
+        for col, w in zip('ABCDEFGHI', widths):
+            ws.column_dimensions[col].width = w
+        return total
 
     # ---- Blok 2: internal fiyat tablosu
     row += 4
@@ -138,18 +147,55 @@ def export(plan, out):
               align=VCENTER, color='1155CC')
         style(ws.cell(row=row, column=6, value=k.get('sessions')), fmt='#,##0')
 
-    for col, w in zip('ABCDEFGH', [22, 8, 12, 12, 18, 40, 28, 58]):
+    for col, w in zip('ABCDEFGHI', widths):
         ws.column_dimensions[col].width = w
-    wb.save(out)
-    return out, total
+    return total
+
+
+AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+
+
+def month_key(title):
+    m = re.match(r'\s*(\S+)\s+(\d{4})', title)
+    if m and m.group(1).capitalize() in AYLAR:
+        return int(m.group(2)) * 12 + AYLAR.index(m.group(1).capitalize())
+    return None
+
+
+def export_to(path, plan, internal):
+    """Markanın Excel'ine ayın sayfasını ekler (varsa yeniden yazar), sayfaları kronolojik sıralar."""
+    title = plan['month_year']
+    if os.path.exists(path):
+        wb = load_workbook(path)
+        if title in wb.sheetnames:
+            del wb[title]
+        ws = wb.create_sheet(title)
+    else:
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        wb = Workbook()
+        ws = wb.active
+        ws.title = title
+    total = write_sheet(ws, plan, internal)
+    known = [w for w in wb._sheets if month_key(w.title) is not None]
+    other = [w for w in wb._sheets if month_key(w.title) is None]
+    wb._sheets = sorted(known, key=lambda w: month_key(w.title)) + other
+    wb.active = wb._sheets.index(ws)
+    wb.save(path)
+    return total
 
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('plan')
-    ap.add_argument('--out')
+    ap.add_argument('--internal', required=True, help='<Marka>_Backlink_Internal.xlsx (3 blok)')
+    ap.add_argument('--shared', required=True, help='<Marka>_Backlink_Shared.xlsx (sadece plan tablosu)')
     a = ap.parse_args()
     plan = json.load(open(a.plan, encoding='utf-8'))
-    out = a.out or f"backlink_plan_{plan['brand_name']}_{plan['month_year'].replace(' ', '_')}.xlsx"
-    path, total = export(plan, out)
-    print(f'✓ {path} | {len(plan["sites"])} site, toplam {tr_num(total)} TL + KDV')
+    missing = [s['domain'] for s in plan['sites'] if not s.get('inbound_note')]
+    if missing:
+        print(f'⚠ Inbound Notu boş: {", ".join(missing)}')
+    total = export_to(a.internal, plan, internal=True)
+    export_to(a.shared, plan, internal=False)
+    print(f'✓ {plan["month_year"]} sayfası yazıldı | {len(plan["sites"])} site, toplam {tr_num(total)} TL + KDV')
+    print(f'  Internal: {a.internal}')
+    print(f'  Shared:   {a.shared}')
