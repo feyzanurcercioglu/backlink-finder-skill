@@ -1,0 +1,69 @@
+{
+  "domain": "flormar.com.tr",
+  "brand_tokens": [
+    "flormar"
+  ],
+  "vertical": "kozmetik / makyaj",
+  "matching_site_categories": [
+    "Güzellik",
+    "Makyaj",
+    "Cilt Bakımı",
+    "Kişisel Bakım"
+  ],
+  "seomonitor_campaign_id": 109279,
+  "primary_device": "mobile",
+  "priority_group_ids": [
+    224958,
+    224959,
+    224960,
+    224961
+  ],
+  "priority_group_names": [
+    "KPI 1",
+    "KPI 2",
+    "KPI 1+2",
+    "Yeni KPI"
+  ],
+  "main_categories": [
+    "Yüz",
+    "Göz",
+    "Dudak",
+    "Tırnak",
+    "Cilt Bakımı"
+  ],
+  "secondary_category_paths": [
+    "makyaj-cantasi",
+    "makyaj-fircalari",
+    "aksesuar",
+    "sunger",
+    "hediye"
+  ],
+  "core_category_paths": [
+    "fondoten",
+    "maskara-rimel",
+    "kapatici",
+    "goz-fari",
+    "aydinlatici-highlighter",
+    "makyaj-bazi",
+    "kontur",
+    "ruj",
+    "oje",
+    "eyeliner",
+    "allik",
+    "pudra",
+    "goz-kalemi",
+    "/makyaj/"
+  ],
+  "minor_category_paths": [
+    "dudak-bakimi",
+    "cc-krem",
+    "bb-krem",
+    "top-coat",
+    "tint"
+  ],
+  "seasonal": {},
+  "dr_min": 25,
+  "content_fee": 750,
+  "avoid_sites": [],
+  "notes": "Öncelik grubu KPI ALL klasörü (KPI 1, KPI 2, KPI 1+2, Yeni KPI) varsayıldı; kullanıcı onayı bekleniyor (2026-10-01). Aksesuar (çanta, fırça, sünger) yan kategori."
+}

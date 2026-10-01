@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+calisma/
+çalışma/
+*.xlsx
+brands/*_gecmis.csv

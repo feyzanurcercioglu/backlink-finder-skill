@@ -1,0 +1,2 @@
+# Marka fark etmeksizin önerilmeyecek zararlı siteler (her satıra bir domain).
+# Zararlı site kontrolünde elenen ve kullanıcının onayladığı siteler buraya eklenir.

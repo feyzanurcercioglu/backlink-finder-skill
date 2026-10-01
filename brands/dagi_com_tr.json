@@ -1,0 +1,66 @@
+{
+  "domain": "dagi.com.tr",
+  "brand_tokens": [
+    "dagi",
+    "dağı"
+  ],
+  "vertical": "moda / iç giyim",
+  "matching_site_categories": [
+    "Moda",
+    "Giyim",
+    "Stil",
+    "Kombin"
+  ],
+  "seomonitor_campaign_id": 110467,
+  "primary_device": "mobile",
+  "priority_group_ids": [
+    192130
+  ],
+  "priority_group_names": [
+    "Önemli Kelimeler"
+  ],
+  "main_categories": [
+    "İç Giyim (sütyen, külot, atlet, termal)",
+    "Ev-Uyku Giyim (pijama, gecelik, sabahlık)",
+    "Plaj Giyim (bikini, mayo)",
+    "Spor Giyim (tayt, sporcu sütyeni)",
+    "Günlük Giyim"
+  ],
+  "secondary_category_paths": [
+    "corap",
+    "canta",
+    "terlik",
+    "sapka",
+    "aksesuar",
+    "havlu"
+  ],
+  "seasonal": {
+    "Plaj Giyim": "Nisan-Ağustos",
+    "Termal": "Ekim-Şubat"
+  },
+  "dr_min": 25,
+  "content_fee": 750,
+  "avoid_sites": [],
+  "notes": "Öncelik SEOmonitor 'Önemli Kelimeler' grubu ve ana menü kategorileri. Aksesuar altındaki çorap vb. yan kategoriler backlink için seçilmez. Kullanıcı onayı: 2026-10-01. Çekirdek kategoriler (core) termal/jüpon gibi alt kategorilerden önce gelir; SEOmonitor'da dalgalanan kelimeler önceliklidir (kullanıcı, 2026-10-01).",
+  "core_category_paths": [
+    "boxer",
+    "slip",
+    "atlet",
+    "fanila",
+    "sutyen",
+    "kulot",
+    "tanga",
+    "string",
+    "ic-giyim",
+    "pijama",
+    "gecelik"
+  ],
+  "minor_category_paths": [
+    "termal",
+    "jupon",
+    "kombinezon",
+    "sabahlik",
+    "hamile",
+    "lohusa"
+  ]
+}
