@@ -54,8 +54,8 @@ Opsiyonel girdiler (sorma, verilirse kullan): çalışma ayı (varsayılan için
 [4] SEOmonitor → önceki ayın kelimeleri → öncelik grubu + dalgalanma + kategori (keyword_select.py)
 [5] Kategori taraması (category_scan.py) → menü teyidi → Ahrefs DR/trafik → güvenlik kontrolü (zararlı sorgu + 18 ay geçmiş, site_kontrol.py)
     → Inbound Notu araştırması → bütçe doluluğu → kelime ataması
-[6] Planı sohbette sun, revize al
-[7] Onay sonrası Internal + Shared Excel'e ayın sayfasını yaz (export_excel.py)
+[6] Planı sohbette sun + aynı anda Internal + Shared Excel'e ayın sayfasını yazıp aç (export_excel.py --open)
+[7] Revize gelirse planı ve Excel'i güncelle, yeniden aç
 ```
 
 ### 1. Dönem ve geçmiş
@@ -254,18 +254,20 @@ Elenen sezonluk kelimeler, elenen siteler (gerekçeli: kategori yok / PBN / DR) 
 
 Tabloda her kelimenin **link verilecek URL'i** (markanın kategori sayfası, tam yol) ve her sitenin **yayın kategorisi URL'i** mutlaka yer alır; ekip linki ve yayın yerini tablodan doğrudan kontrol edebilmeli. Sunmadan önce her iki URL tipini `curl -s -o /dev/null -L -w "%{http_code}"` ile kontrol et; 200 dönmeyen URL'i kullanma, doğrusunu bul.
 
-Ardından sor: "Değiştirmek istediğin site/kelime var mı, yoksa Excel'i çıkarayım mı?" Revizede bütçeyi ve son 6 ay kuralını yeniden kontrol et.
+**Excel'i hemen ver:** Planı sohbette sunduğun anda Excel'leri de yaz ve kullanıcının bilgisayarında aç; onay bekleme (7. adımdaki komut, `--open` ile). Sohbetteki tablo ile Excel aynı planı gösterir; kullanıcı ikisinden birinde inceleyebilir. Mesajın sonunda iki dosyanın tam yolunu tıklanabilir şekilde ver.
+
+Ardından sor: "Değiştirmek istediğin site/kelime var mı?" Revize gelirse planı güncelle, bütçe/son 6 ay/güvenlik kurallarını yeniden kontrol et ve Excel'i aynı komutla yeniden yaz (aynı ayın sayfası güncellenir, diğer aylar korunur) ve tekrar aç. Kullanıcı Excel'i açık tutuyorsa kaydetme hatası alınabilir; o durumda kapatmasını iste.
 
 claude.ai'da çalışılıyorsa ve kullanıcı isterse planı interaktif panel olarak da sunabilirsin; panel tasarımı `${CLAUDE_PLUGIN_ROOT}/references/widget.md` dosyasında.
 
 ### 7. Excel export (Internal + Shared, aylık sayfa)
 
-Planı `$W/plan.json`'a yaz (şema `scripts/export_excel.py` başında; her sitede `inbound_note`, `category`, `category_url` dolu olmalı) ve çalıştır:
+Bu adım 6. adımdaki sunumla birlikte çalışır (plan sunulur sunulmaz) ve her revizyonda tekrarlanır. Planı `$W/plan.json`'a yaz (şema `scripts/export_excel.py` başında; her sitede `inbound_note`, `category`, `category_url` dolu olmalı) ve çalıştır:
 
 ```bash
 python3 "$P/scripts/export_excel.py" "$W/plan.json" \
   --internal "$U/<Marka>/<Marka>_Backlink_Internal.xlsx" \
-  --shared   "$U/<Marka>/<Marka>_Backlink_Shared.xlsx"
+  --shared   "$U/<Marka>/<Marka>_Backlink_Shared.xlsx" --open
 ```
 
 Her marka için iki kalıcı dosya vardır; her çalışma ayı bu dosyalara **yeni bir sayfa** olarak eklenir ("Ekim 2026", sonra "Kasım 2026"...). Dosya yoksa oluşturulur. Aynı ayın sayfası zaten varsa (revizyon) yalnızca o sayfa yeniden yazılır, diğer aylara dokunulmaz. Sayfalar kronolojik sıralanır.

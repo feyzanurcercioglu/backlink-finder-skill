@@ -67,7 +67,7 @@ ya da doğrudan yazın: "Dagi için Kasım backlink çalışması hazırla". Plu
 3. Son 6 ayda bu marka için çalışılan siteler (ay + domain listesi)
 4. Daha önce yapılmış backlink çalışması Excel'i (varsa dosya yolu)
 
-Plan önce sohbette tablo olarak gelir; revizeler sonrası onay verince Excel'e yazılır.
+Plan sohbette tablo olarak gelir ve aynı anda Internal + Shared Excel'ler oluşturulup bilgisayarınızda açılır. Revize isterseniz Excel'deki ayın sayfası güncellenip yeniden açılır.
 
 ## Çıktılar
 

@@ -31,7 +31,9 @@ import argparse
 import json
 
 import os
+import platform
 import re
+import subprocess
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -189,6 +191,7 @@ if __name__ == '__main__':
     ap.add_argument('plan')
     ap.add_argument('--internal', required=True, help='<Marka>_Backlink_Internal.xlsx (3 blok)')
     ap.add_argument('--shared', required=True, help='<Marka>_Backlink_Shared.xlsx (sadece plan tablosu)')
+    ap.add_argument('--open', action='store_true', help='Yazdıktan sonra iki dosyayı varsayılan uygulamada (Excel) aç')
     a = ap.parse_args()
     plan = json.load(open(a.plan, encoding='utf-8'))
     missing = [s['domain'] for s in plan['sites'] if not s.get('inbound_note')]
@@ -199,3 +202,15 @@ if __name__ == '__main__':
     print(f'✓ {plan["month_year"]} sayfası yazıldı | {len(plan["sites"])} site, toplam {tr_num(total)} TL + KDV')
     print(f'  Internal: {a.internal}')
     print(f'  Shared:   {a.shared}')
+    if a.open:
+        for f in (a.internal, a.shared):
+            try:
+                if platform.system() == 'Darwin':
+                    subprocess.run(['open', f], check=False)
+                elif platform.system() == 'Windows':
+                    os.startfile(f)  # noqa
+                else:
+                    subprocess.run(['xdg-open', f], check=False)
+            except Exception as e:  # noqa: BLE001
+                print(f'  (açılamadı: {e})')
+        print('  Excel dosyaları açıldı.')
