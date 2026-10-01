@@ -7,15 +7,34 @@ yazar ve markanın **Internal** ve **Shared** Excel'lerine o ayın sayfasını e
 
 ## Kurulum (bir kez)
 
-Claude Code içinde:
+### Seçenek A - Terminalden tek komut (en kolay)
+
+Terminali açın, aşağıdaki satırın tamamını kopyalayıp yapıştırın:
+
+```bash
+claude plugin marketplace add feyzanurcercioglu/backlink-finder-skill && claude plugin install backlink-finder@inbound-seo
+```
+
+### Seçenek B - Claude Code içinden, iki ayrı adım
+
+Komutları **tek tek** kopyalayıp her birinden sonra Enter'a basın; ikisini birlikte yapıştırmayın.
+
+**Adım 1** - marketplace'i ekleyin:
 
 ```
 /plugin marketplace add feyzanurcercioglu/backlink-finder-skill
+```
+
+**Adım 2** - plugin'i kurun:
+
+```
 /plugin install backlink-finder@inbound-seo
 ```
 
-Terminalden aynısı: `claude plugin marketplace add feyzanurcercioglu/backlink-finder-skill`
-ve `claude plugin install backlink-finder@inbound-seo`.
+> `/plugin` menüsünden **Add Marketplace** ekranını açtıysanız "Enter marketplace source" kutusuna
+> **sadece** `feyzanurcercioglu/backlink-finder-skill` yazın. Sonra Adım 2'ye geçin.
+
+### Kurulumdan sonra
 
 Claude Code'u yeniden başlatın. Önerilen: `/plugin` > **Marketplaces** > `inbound-seo` >
 **Enable auto-update**. Böylece her ay yeni mecra listesi ve kural güncellemeleri kendiliğinden gelir.
@@ -26,14 +45,14 @@ Claude Code'u yeniden başlatın. Önerilen: `/plugin` > **Marketplaces** > `inb
 
 ## Güncelleme
 
-Auto-update açıksa bir şey yapmanıza gerek yok. Elle güncellemek için:
+Auto-update açıksa bir şey yapmanıza gerek yok. Elle güncellemek için terminalde tek satır:
 
-```
-/plugin marketplace update inbound-seo
+```bash
+claude plugin marketplace update inbound-seo && claude plugin update backlink-finder@inbound-seo
 ```
 
-ardından `/plugin` > **Installed** > `backlink-finder` > **Update now**
-(terminalden: `claude plugin update backlink-finder@inbound-seo`). Sonra Claude Code'u yeniden başlatın.
+ya da Claude Code içinde önce `/plugin marketplace update inbound-seo`, sonra `/plugin` > **Installed** >
+`backlink-finder` > **Update now**. Ardından Claude Code'u yeniden başlatın.
 
 ## Kullanım
 
