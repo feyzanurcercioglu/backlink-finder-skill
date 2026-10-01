@@ -92,7 +92,8 @@ Ara dosyalar `~/Documents/Backlink Finder/<Marka>/calisma/<Ay_Yıl>/` altında t
   sezon dışı, yan kategori (aksesuar vb.) ve ürün/blog sayfasına sıralanan kelimeler alınmaz.
 - **Site:** menüsünde markanın dikeyiyle doğrudan eşleşen kategori (moda → Moda, kozmetik →
   Güzellik/Makyaj, teknoloji → Teknoloji); DR ve trafik Ahrefs'ten o gün (DR 25 altı yok);
-  PBN kalıbı ve bahis/yetişkin içerik yok; son 6 ayda bu markaya kullanılmamış.
+  PBN kalıbı yok; sıralama aldığı kelimelerde cinsel/bahis içerik yok; sadece son 1-3 aydır sıralama
+  alan yeni siteler yok (Ahrefs 18 ay geçmişi); son 6 ayda bu markaya kullanılmamış.
 - **Bütçe:** site ücreti + site başına 750 TL içerik; bütçeyi aşmaz, en az ~%87'sini kullanır.
 
 ## Gereksinimler
@@ -134,6 +135,7 @@ backlink-finder-skill/
 │   ├── filter_sites.py           Son 6 ay, dil, bütçe, DR ön elemesi
 │   ├── keyword_select.py         Öncelik grubu + dalgalanma + kategori skorlaması
 │   ├── category_scan.py          Havuzda menü kategorisi taraması (paralel)
+│   ├── site_kontrol.py           Zararlı sorgu + yeni site kararı (ELE / DİKKAT / TEMİZ)
 │   └── export_excel.py           Internal + Shared Excel'e aylık sayfa
 ├── references/widget.md          claude.ai için opsiyonel panel
 └── requirements.txt

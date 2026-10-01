@@ -52,7 +52,7 @@ Opsiyonel girdiler (sorma, verilirse kullan): çalışma ayı (varsayılan için
 [2] Plugin'deki mecra listesi → birleşik havuz (build_pool.py)
 [3] Filtre: son 6 ay, kara listeler, dil, bütçe tavanı, DR ön eleme (filter_sites.py)
 [4] SEOmonitor → önceki ayın kelimeleri → öncelik grubu + dalgalanma + kategori (keyword_select.py)
-[5] Kategori taraması (category_scan.py) → menü teyidi → Ahrefs DR/trafik → zararlı site kontrolü
+[5] Kategori taraması (category_scan.py) → menü teyidi → Ahrefs DR/trafik → güvenlik kontrolü (zararlı sorgu + 18 ay geçmiş, site_kontrol.py)
     → Inbound Notu araştırması → bütçe doluluğu → kelime ataması
 [6] Planı sohbette sun, revize al
 [7] Onay sonrası Internal + Shared Excel'e ayın sayfasını yaz (export_excel.py)
@@ -186,17 +186,32 @@ Bütçe aralığında kategorisi eşleşen site azsa önce aşağıdaki "Bütçe
 - Aynı hedef URL'e giden kelimeler farklı sitelere dağıtılır (anchor ve kaynak çeşitliliği).
 - Çok linkli sitede kelimeler tercihen farklı URL'lere gider.
 
-**Zararlı site kontrolü** - kısa listedeki her site için (havuzun tamamı için değil, maliyet yüksek):
-1. **PBN/link çiftliği kalıbı** (batch-analysis sonucundan): yüzlerce referring domain ama organik trafik ~0 (ör. 800 refdomain, 0 trafik) ya da DR yüksek ama refdomain çok az (ör. DR 65, 12 refdomain: şişirilmiş DR). Bu sitelerin linki değer taşımaz ve risklidir; ele. DR'ına göre trafiği düşük ama sıfır olmayan sitelerde `site-explorer-metrics-history` ile son aylarda sert düşüş var mı bak.
-2. **Organik sorgu taraması (plana giren her site için zorunlu, menü/ana sayfa temiz görünse bile):** Ahrefs `site-explorer-organic-keywords` ile filtresiz, `best_position <= 5`, hacme göre azalan ilk 20-30 sorguyu çek. Sorgularda yetişkin/müstehcen (ifşa, çıplak, +18, seks, porno, erotik, escort ve açık cinsel ifadeler), bahis/casino/kumar, ilaç satışı, kripto/forex dolandırıcılığı, sahte belge varsa ele. Örnek: snobmagazin.com menüde "Moda ve Güzellik" kategorisi ve temiz bir ana sayfayla geçti, ama "… ifşa", "… çıplak pozları" gibi sorgularda 1. sıradaydı; kozmetik markası için marka güvenliği riski olduğundan elendi. Bu çağrı Inbound Notu'ndaki "ilk 5 sorgu" bilgisini de verir; ikisini aynı adımda yap.
-3. Ahrefs `site-explorer-outlinks-stats` / `linked-domains`: dış link verdiği domain sayısı içerik hacmine göre çok yüksekse link çiftliği.
-4. Siteye WebFetch ile göz at: ana sayfa ve "sponsorlu/misafir yazı" sayfalarında alakasız konularda yoğun yazı, spin içerik, gizli bahis linkleri, hacklenmiş görüntü varsa ele.
+**Site güvenlik kontrolü (zorunlu)** - plana ya da yedek listeye girecek **her** site için; havuzun tamamı için değil (maliyet yüksek). Bir site bu kontrolden geçmeden sunulmaz.
+
+1. **PBN/link çiftliği kalıbı** (batch-analysis sonucundan): yüzlerce referring domain ama organik trafik ~0 (ör. 800 refdomain, 0 trafik) ya da DR yüksek ama refdomain çok az (ör. DR 65, 12 refdomain: şişirilmiş DR). Ele.
+2. **Zararlı sorgu taraması (sitenin sıralama aldığı TÜM kelimelerde):** Menü ve ana sayfa temiz görünse bile site, forumu, yorumları ya da tek bir yazısı üzerinden cinsel/bahis sorgularında sıralanıyor olabilir. Ahrefs `site-explorer-organic-keywords` ile pozisyon filtresi olmadan, aşağıdaki terim filtresiyle çek (`target` = site, `mode: subdomains`, `country: tr`, `date` = dönem sonu, `select: keyword,best_position,volume,best_position_url`, `order_by: volume:desc`, `limit: 30`):
+   ```json
+   {"or":[{"field":"keyword","is":["isubstring","seks"]},{"field":"keyword","is":["isubstring","sex"]},{"field":"keyword","is":["isubstring","porno"]},{"field":"keyword","is":["isubstring","porn"]},{"field":"keyword","is":["isubstring","sikiş"]},{"field":"keyword","is":["isubstring","ifşa"]},{"field":"keyword","is":["isubstring","çıplak"]},{"field":"keyword","is":["isubstring","escort"]},{"field":"keyword","is":["isubstring","erotik"]},{"field":"keyword","is":["isubstring","xxx"]},{"field":"keyword","is":["isubstring","bahis"]},{"field":"keyword","is":["isubstring","casino"]},{"field":"keyword","is":["isubstring","kumar"]},{"field":"keyword","is":["isubstring","iddaa"]},{"field":"keyword","is":["isubstring","slot"]},{"field":"keyword","is":["isubstring","deneme bonusu"]},{"field":"keyword","is":["isubstring","bet giriş"]}]}
+   ```
+   Ayrıca filtresiz `best_position <= 5` ilk 20 sorguya bak (Inbound Notu için de gerekir); ilaç satışı, kripto/forex dolandırıcılığı, sahte belge gibi terim listesinde olmayan riskleri gözle kontrol et.
+3. **Organik geçmiş:** Ahrefs `site-explorer-metrics-history` ile son 18 ayın aylık organik trafiği (`date_from` = 18 ay önce, `history_grouping: monthly`, `select: date,org_traffic`). Sadece son 1-3 aydır sıralama alan site (yeni açılmış, süresi dolmuş domainden canlandırılmış ya da link satışı için şişirilmiş) güvenilir değildir.
+4. **Karar (script):** 2 ve 3'ün sonuçlarını `$W/ahrefs_kontrol.json`'a yaz (`{"site.com": {"history": [...], "harmful": [...]}}`) ve çalıştır:
+   ```bash
+   python3 "$P/scripts/site_kontrol.py" --in "$W/ahrefs_kontrol.json" --out "$W/site_kontrol.csv"
+   ```
+   - **ELE:** cinsel/bahis sorgusunda ilk 20'de sıralama ya da bu tür 3+ sorgu; anlamlı trafik son 3 ay içinde başlamış (yeni site). Plana ve yedek listeye alınmaz.
+   - **DİKKAT:** son ay trafiği önceki 6 ayın medyanının 3 katından fazla (ani sıçrama) ya da zirveye göre %75+ düşüş (çöküş). Alınabilir ama sunumda gerekçesiyle belirtilir; kullanıcı karar verir.
+   - Script masum eşleşmeleri (unisex, seksek, transeksüel, "kumarki" soyadı...) eler; yine de çıkan sorguları gözle doğrula, yanlış alarmı gerekçesiyle not et.
+
+   Örnekler: annelertoplandik.com 383K trafikli büyük bir anne forumu, ama forum başlıkları üzerinden "… sikiş hikayeleri" 5., "… pornoları" 1., "… escort numarası" 7. sırada → ELE. begonya.com "… ifşa" sorgusunda 10. → ELE. doktorumnedio.com 17 ay boyunca aylık ~50-120 trafikle durup son ayda 4.722'ye çıkmış → ELE (yeni). beyruni.com zirveden %87 düşmüş → DİKKAT.
+5. Ahrefs `site-explorer-outlinks-stats` / `linked-domains`: dış link verdiği domain sayısı içerik hacmine göre çok yüksekse link çiftliği.
+6. Siteye WebFetch ile göz at: ana sayfa ve "sponsorlu/misafir yazı" sayfalarında alakasız konularda yoğun yazı, spin içerik, gizli bahis linkleri, hacklenmiş görüntü varsa ele.
 
 Elenen her site için kısa gerekçe yaz ve kullanıcıya "yerel kara listeye (`$U/_profiller/_global_blacklist.txt`) ekleyeyim mi?" diye sor; eklenen siteleri plugin yöneticisine de iletmesini öner ki ortak listeye girsin; zararlı site marka fark etmeksizin zararlıdır. Sadece bu markayla uyumsuzsa marka profilinin `avoid_sites` alanı önerilir.
 
 **Uyum kontrolü:** Domain adı ve kategoriden sitenin gerçek konusunu tahmin etme, doğrula (WebFetch / web arama). Örnek çıktı:
 ```
-✓ begonya.com - kadın/güzellik portalı, "Moda" kategorisi var
+✗ begonya.com - Moda/Makyaj kategorileri var ama "… ifşa" sorgusunda 10. sırada
 ✓ annebebek.com.tr - anne-bebek dergisi, "Anne Bebek Modası" bölümü var
 ✗ hairist.com.tr - aracı teması "moda-guzellik" ama menüsü sadece saç bakımı; Moda kategorisi yok
 ✗ webanne.com - Kadın > Güzellik var, Moda kategorisi yok (birkaç dağınık kombin yazısı yetmez)
@@ -204,7 +219,8 @@ Elenen her site için kısa gerekçe yaz ve kullanıcıya "yerel kara listeye (`
 ✗ kadingirisim.com - 830 refdomain, 0 trafik (PBN kalıbı)
 ✗ istanbeautiful.com - adı güzellik gibi ama İstanbul gezi/medikal turizm sitesi; Güzellik kategorisi yok
 ✗ evosangels.com - "Sağlık & Güzellik" kategorisi var ama ana sayfada iddaa programları (bahis)
-✗ snobmagazin.com - menüde "Moda ve Güzellik" var ama müstehcen magazin sorgularında 1. sırada (organik sorgu taraması)
+✗ snobmagazin.com - menüde "Moda ve Güzellik" var ama müstehcen magazin sorgularında 1. sırada (zararlı sorgu taraması)
+✗ annelertoplandik.com - Moda kategorisi ve 383K trafik var ama forum başlıklarıyla cinsel sorgularda ilk 10'da
 ✓ mimuu.com - örgü/hobi ağırlıklı ama menüde "Güzellik - Bakım" kategorisi var, sorguları temiz
 ✗ ornekhaber.net - bahis anahtar kelimelerinde sıralanıyor (zararlı)
 ```
@@ -227,7 +243,8 @@ Kullanıcıya önce özet, sonra tablo:
 ```
 Dagi - Ekim 2026 backlink planı (veri: 1-30 Eylül 2026, SEOmonitor)
 Bütçe: 20.000 TL | Plan: 19.350 TL + KDV (6 site × 750 içerik dahil)
-Havuz: 1.054 site → son 6 ay: -13, fiyat: -443, kategori eşleşmesi yok: -..., PBN/zararlı: -..., DR<25 (Ahrefs): -... → N uygun aday
+Havuz: 1.054 site → son 6 ay: -13, fiyat: -443, kategori eşleşmesi yok: -..., PBN: -..., zararlı sorgu: -..., yeni site: -..., DR<25 (Ahrefs): -... → N uygun aday
+Güvenlik kontrolü: her site için zararlı sorgu + 18 ay geçmiş sonucu (TEMİZ / DİKKAT + gerekçe)
 
 | Domain | DR (Ahrefs) | Trafik (Ahrefs) | Site Ücreti | İçerik | Keyword | Link verilecek URL (marka) | Yayın kategorisi (ad + URL) | Inbound Notu |
 ...
@@ -294,7 +311,7 @@ Bütçe profile yazılmaz; her ay sorulur.
 1. **Son 6 ay:** Kullanıcının verdiği listedeki hiçbir site önerilmez, yedek listede bile.
 2. **Kategori eşleşmesi:** Menüsünde markanın dikeyiyle doğrudan eşleşen kategori (moda markası → Moda; teknoloji → Teknoloji) olmayan site önerilmez, yedek listede de. Komşu kategori ya da dağınık yazılar yetmez.
 3. **DR 25 altı** önerilmez. DR ve trafik öneri anında Ahrefs'ten doğrulanır; aracı listesindeki DR karar için kullanılmaz.
-4. **Zararlı site** (bahis, yetişkin, PBN/link çiftliği, hacklenmiş, trafiği çökmüş) önerilmez.
+4. **Zararlı ya da yeni site önerilmez:** sıralama aldığı herhangi bir kelimede cinsel/bahis içerik varsa (ilk 20'de ya da 3+ sorgu), sadece son 1-3 aydır sıralama alıyorsa, PBN/link çiftliği ya da hacklenmiş ise. Her site `site_kontrol.py` ile değerlendirilir.
 5. **Fiyat** sadece "Markaya yansıtılacak fiyat" sütunundan; içerik site başına 750 TL. Toplam bütçeyi aşmaz ve en az ~%87'sini kullanır.
 6. **İlk 3'teki kelimeler** (dönem sonu sıra 1-3) seçilmez. **Kelimeler** markanın öncelikli gruplarından ve ana menü kategorilerinden seçilir; önce dalgalanan, sonra çekirdek kategori kelimeleri gelir; yan kategori kelimeleri (aksesuar vb.) seçilmez. Kelimeler SEOmonitor'dan, çalışma ayından önceki takvim ayı verisiyle. Jenerik kategori kelimeleri öncelikli, brand kelimeler hariç. Çalışma ayının sezonuna uymayan kategoriler alınmaz. Sıra/hacim asla tahmin edilmez; SEOmonitor'a erişilemezse kullanıcıdan export iste.
 7. **Dil:** TR markada yabancı dil (EN) sayfasındaki siteler elenir.
