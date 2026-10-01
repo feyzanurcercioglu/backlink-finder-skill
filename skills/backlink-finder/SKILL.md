@@ -188,7 +188,7 @@ Bütçe aralığında kategorisi eşleşen site azsa önce aşağıdaki "Bütçe
 
 **Zararlı site kontrolü** - kısa listedeki her site için (havuzun tamamı için değil, maliyet yüksek):
 1. **PBN/link çiftliği kalıbı** (batch-analysis sonucundan): yüzlerce referring domain ama organik trafik ~0 (ör. 800 refdomain, 0 trafik) ya da DR yüksek ama refdomain çok az (ör. DR 65, 12 refdomain: şişirilmiş DR). Bu sitelerin linki değer taşımaz ve risklidir; ele. DR'ına göre trafiği düşük ama sıfır olmayan sitelerde `site-explorer-metrics-history` ile son aylarda sert düşüş var mı bak.
-2. Ahrefs `site-explorer-organic-keywords` (ilk 20-30): bahis, casino, kumar, yetişkin, ilaç, kripto/forex dolandırıcılığı, sahte belge gibi konularda sıralanıyorsa ele.
+2. **Organik sorgu taraması (plana giren her site için zorunlu, menü/ana sayfa temiz görünse bile):** Ahrefs `site-explorer-organic-keywords` ile filtresiz, `best_position <= 5`, hacme göre azalan ilk 20-30 sorguyu çek. Sorgularda yetişkin/müstehcen (ifşa, çıplak, +18, seks, porno, erotik, escort ve açık cinsel ifadeler), bahis/casino/kumar, ilaç satışı, kripto/forex dolandırıcılığı, sahte belge varsa ele. Örnek: snobmagazin.com menüde "Moda ve Güzellik" kategorisi ve temiz bir ana sayfayla geçti, ama "… ifşa", "… çıplak pozları" gibi sorgularda 1. sıradaydı; kozmetik markası için marka güvenliği riski olduğundan elendi. Bu çağrı Inbound Notu'ndaki "ilk 5 sorgu" bilgisini de verir; ikisini aynı adımda yap.
 3. Ahrefs `site-explorer-outlinks-stats` / `linked-domains`: dış link verdiği domain sayısı içerik hacmine göre çok yüksekse link çiftliği.
 4. Siteye WebFetch ile göz at: ana sayfa ve "sponsorlu/misafir yazı" sayfalarında alakasız konularda yoğun yazı, spin içerik, gizli bahis linkleri, hacklenmiş görüntü varsa ele.
 
@@ -204,7 +204,8 @@ Elenen her site için kısa gerekçe yaz ve kullanıcıya "yerel kara listeye (`
 ✗ kadingirisim.com - 830 refdomain, 0 trafik (PBN kalıbı)
 ✗ istanbeautiful.com - adı güzellik gibi ama İstanbul gezi/medikal turizm sitesi; Güzellik kategorisi yok
 ✗ evosangels.com - "Sağlık & Güzellik" kategorisi var ama ana sayfada iddaa programları (bahis)
-✓ snobmagazin.com - menüde "Moda ve Güzellik" kategorisi (Flormar için uygun)
+✗ snobmagazin.com - menüde "Moda ve Güzellik" var ama müstehcen magazin sorgularında 1. sırada (organik sorgu taraması)
+✓ mimuu.com - örgü/hobi ağırlıklı ama menüde "Güzellik - Bakım" kategorisi var, sorguları temiz
 ✗ ornekhaber.net - bahis anahtar kelimelerinde sıralanıyor (zararlı)
 ```
 Uyumsuz/zararlı çıkan sitenin yerine havuzdan sıradaki uygun siteyi al ve aynı kontrollerden geçir.
