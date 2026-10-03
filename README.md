@@ -46,6 +46,10 @@ Claude Code'u yeniden başlatın. Önerilen: `/plugin` > **Marketplaces** > `inb
 
 ## Güncelleme
 
+**Eski `git clone` kurulumu (`~/.claude/skills/backlink-finder`) kullananlar:** terminalde
+`git -C ~/.claude/skills/backlink-finder pull` çalıştırıp Claude Code'u yeniden başlatın; güncel kurallar ve mecra
+listesi gelir. Yine de plugin kurulumuna geçmeniz önerilir (aşağıdaki komutlar).
+
 > Plugin güncel değilse **çalışmaz**: her çalıştırmada GitHub'daki son sürümle karşılaştırılır; eskiyse
 > plan hazırlanmaz ve aşağıdaki güncelleme komutu gösterilir. Güncelleyip Claude Code'u yeniden başlatın.
 
@@ -123,7 +127,8 @@ Ay başında yeni "(Internal) Inbound x Backlink Siteleri - <Ay Yıl>.xlsx" geld
 1. Dosyayı `data/mecra_listesi.xlsx` olarak değiştir.
 2. `data/mecra_listesi.json`'da `kaynak`, `liste_ayi`, `kullanim_ayi`, `guncelleme` alanlarını güncelle.
 3. `.claude-plugin/plugin.json`'da `version`'ı artır (ör. 1.0.0 → 1.1.0). **Sürüm artmazsa ekip güncellemeyi almaz.**
-4. Commit + push.
+4. SKILL.md değiştiyse `python3 scripts/kok_skill_esitle.py` (kökteki SKILL.md'yi eşitler; eski git-clone kurulumları onu kullanır).
+5. Commit + push.
 
 Kural/script değişikliklerinde de aynı şekilde sürüm artırılıp push edilir. Yeni marka profilleri
 (`brands/<domain>.json`) ve ortak kara liste (`brands/_global_blacklist.txt`) da buradan dağıtılır;

@@ -50,8 +50,24 @@ Eski kopyaları kaldırın:
 Sonra Claude Code'u yeniden başlatın."""
 
 
+CLONE_MSG = """⛔ Backlink Finder skill'iniz güncel değil (kurulu: {{local}}, güncel: {{remote}}).
+Bu sürümle çalışma yapılamaz; mecra listesi ve kurallar eski olabilir.
+
+Güncellemek için terminalde:
+  git -C "{root}" pull
+
+Sonra Claude Code'u yeniden başlatıp çalışmayı tekrar isteyin.
+(Önerilen: plugin kurulumuna geçin, güncellemeler otomatik gelir:
+  claude plugin marketplace add {repo} && claude plugin install {plugin}@{market})"""
+
+
+def is_clone():
+    return os.path.isdir(os.path.join(ROOT, '.git'))
+
+
 def legacy_copies():
-    return [d for d in LEGACY_DIRS if os.path.isdir(d)]
+    here = os.path.realpath(ROOT)
+    return [d for d in LEGACY_DIRS if os.path.isdir(d) and os.path.realpath(d) != here]
 
 
 def vtuple(v):
@@ -112,7 +128,8 @@ if __name__ == '__main__':
             sys.exit(0)
     status, loc, rem = check()
     if status == 'eski':
-        print(UPDATE_MSG.format(local=loc, remote=rem), file=sys.stderr)
+        msg = CLONE_MSG.format(root=os.path.realpath(ROOT), repo=REPO, plugin=PLUGIN, market=MARKET) if is_clone() else UPDATE_MSG
+        print(msg.format(local=loc, remote=rem), file=sys.stderr)
         if not a.hook:
             print(f'SURUM_ESKI kurulu={loc} guncel={rem}')
         sys.exit(2)
