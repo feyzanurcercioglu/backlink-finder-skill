@@ -39,7 +39,7 @@ Kalıcı çözüm: /plugin > Marketplaces > {MARKET} > Enable auto-update"""
 
 LEGACY_DIRS = [os.path.expanduser('~/.claude/skills/backlink-finder'), os.path.expanduser('~/.claude/skills/backlink-skill')]
 LEGACY_CMD = re.compile(r'^/(backlink-skill|backlink-finder)(\s|$)', re.I)   # '/backlink-finder:backlink-finder' hariç
-LEGACY_MSG = """⛔ Bu eski Backlink komutu ({cmd}). Eski sürüm aracı mecra Excel'ini sorar ve güncel kuralları içermez.
+LEGACY_MSG = """⛔ Bu Backlink komutunun ({cmd}) arkasındaki kopya eski. Eski sürüm aracı mecra Excel'ini sorar ve güncel kuralları içermez.
 
 Doğru komut:  /backlink-finder:backlink-finder
 (ya da doğrudan yazın: "Dagi için Kasım backlink çalışması hazırla")
@@ -59,6 +59,33 @@ Güncellemek için terminalde:
 Sonra Claude Code'u yeniden başlatıp çalışmayı tekrar isteyin.
 (Önerilen: plugin kurulumuna geçin, güncellemeler otomatik gelir:
   claude plugin marketplace add {repo} && claude plugin install {plugin}@{market})"""
+
+
+SKILL_MSG = """⛔ Bu Backlink skill'i (claude.ai'a yüklenen "backlink-skill") güncel değil (yüklü: {local}, güncel: {remote}).
+Bu sürümle çalışma yapılamaz; mecra listesi ve kurallar eski.
+
+Yöneticinize haber verin: claude.ai > Settings > Capabilities > Skills'te "backlink-skill" yeni paketle değiştirilmeli.
+Bu arada güncel sürümü Claude Code'da plugin olarak kullanabilirsiniz (güncellemeler otomatik gelir):
+  claude plugin marketplace add {repo} && claude plugin install {plugin}@{market}
+  komut: /backlink-finder:backlink-finder"""
+
+
+def is_uploaded_skill():
+    """claude.ai'a yüklenip senkronize edilen kopya (Claude Code: ~/.claude/skills/synced/...; claude.ai VM: /mnt/skills/...)."""
+    r = os.path.realpath(ROOT)
+    return '/skills/synced/' in r or r.startswith('/mnt/skills') or os.path.basename(r) == 'backlink-skill'
+
+
+def synced_copies_current(remote):
+    """Senkronize 'backlink-skill' kopyalarından biri güncel sürümdeyse True."""
+    import glob
+    for pj in glob.glob(os.path.expanduser('~/.claude/skills/synced/*/backlink-skill/.claude-plugin/plugin.json')):
+        try:
+            if vtuple(json.load(open(pj, encoding='utf-8')).get('version')) >= vtuple(remote):
+                return True
+        except Exception:  # noqa: BLE001
+            pass
+    return False
 
 
 def is_clone():
@@ -114,22 +141,36 @@ if __name__ == '__main__':
             payload = json.load(sys.stdin)
         except Exception:  # noqa: BLE001
             payload = {}
+        cmd = None
         if a.hook == 'prompt':
             m = LEGACY_CMD.match(str(payload.get('prompt', '')).strip())
-            if m:
-                print(LEGACY_MSG.format(cmd='/' + m.group(1)), file=sys.stderr)
-                sys.exit(2)
+            cmd = ('/' + m.group(1).lower()) if m else None
         if a.hook == 'pretool':
             name = str((payload.get('tool_input') or {}).get('skill', ''))
             if name.split(':')[-1] == 'backlink-skill' or name == 'backlink-finder':
-                print(LEGACY_MSG.format(cmd=name), file=sys.stderr)
-                sys.exit(2)
+                cmd = name
+        if cmd:
+            if cmd.endswith('backlink-skill'):
+                # claude.ai'a yüklenen tam sürüm güncelse çalışmasına izin ver
+                try:
+                    rem = remote_version()
+                except Exception:  # noqa: BLE001
+                    sys.exit(0)
+                if synced_copies_current(rem):
+                    sys.exit(0)
+            print(LEGACY_MSG.format(cmd=cmd), file=sys.stderr)
+            sys.exit(2)
         if not relevant(a.hook, payload):
             sys.exit(0)
     status, loc, rem = check()
     if status == 'eski':
-        msg = CLONE_MSG.format(root=os.path.realpath(ROOT), repo=REPO, plugin=PLUGIN, market=MARKET) if is_clone() else UPDATE_MSG
-        print(msg.format(local=loc, remote=rem), file=sys.stderr)
+        if is_clone():
+            msg = CLONE_MSG.format(root=os.path.realpath(ROOT), repo=REPO, plugin=PLUGIN, market=MARKET).format(local=loc, remote=rem)
+        elif is_uploaded_skill():
+            msg = SKILL_MSG.format(local=loc, remote=rem, repo=REPO, plugin=PLUGIN, market=MARKET)
+        else:
+            msg = UPDATE_MSG.format(local=loc, remote=rem)
+        print(msg, file=sys.stderr)
         if not a.hook:
             print(f'SURUM_ESKI kurulu={loc} guncel={rem}')
         sys.exit(2)

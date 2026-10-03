@@ -132,6 +132,9 @@ Ay başında yeni "(Internal) Inbound x Backlink Siteleri - <Ay Yıl>.xlsx" geld
 3. `.claude-plugin/plugin.json`'da `version`'ı artır (ör. 1.0.0 → 1.1.0). **Sürüm artmazsa ekip güncellemeyi almaz.**
 4. SKILL.md değiştiyse `python3 scripts/kok_skill_esitle.py` (kökteki SKILL.md'yi eşitler; eski git-clone kurulumları onu kullanır).
 5. Commit + push.
+6. claude.ai paketi: `python3 scripts/skill_paketle.py` → `backlink-skill.skill`; claude.ai > Settings > Capabilities >
+   Skills'te "backlink-skill"i bu dosyayla değiştir. (Yapılmazsa claude.ai/`/backlink-skill` kullanıcıları güncelleme
+   uyarısı alır ve çalışamaz.)
 
 Kural/script değişikliklerinde de aynı şekilde sürüm artırılıp push edilir. Yeni marka profilleri
 (`brands/<domain>.json`) ve ortak kara liste (`brands/_global_blacklist.txt`) da buradan dağıtılır;

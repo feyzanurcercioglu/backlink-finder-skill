@@ -30,7 +30,9 @@ Her ay markalar için backlink çalışması yapılır. Bu skill o ayın planın
 
 Aşağıdaki komutlarda `$P` = plugin kökü, `$U="$HOME/Documents/Backlink Finder"`, `$W="$U/<Marka>/calisma/<Ay_Yıl>"`.
 
-**`$P` nasıl belirlenir:** Plugin kurulumunda `${CLAUDE_PLUGIN_ROOT}` (yüklemede gerçek yola açılır). Skill `git clone` ile `~/.claude/skills/backlink-finder` altına kurulduysa `${CLAUDE_PLUGIN_ROOT}` açılmaz ve metinde aynen görünür; bu durumda `$P` = skill yüklenirken verilen "Base directory" (repo kökü; `scripts/`, `data/`, `brands/` orada). Komutlardaki `${CLAUDE_PLUGIN_ROOT}` ifadelerini de bu dizinle değiştir.
+**`$P` nasıl belirlenir:** Plugin kurulumunda `${CLAUDE_PLUGIN_ROOT}` (yüklemede gerçek yola açılır). Skill `git clone` ile `~/.claude/skills/backlink-finder` altına kurulduysa ya da claude.ai'a "backlink-skill" paketi olarak yüklendiyse `${CLAUDE_PLUGIN_ROOT}` açılmaz ve metinde aynen görünür; bu durumda `$P` = skill yüklenirken verilen "Base directory" (`scripts/`, `data/`, `brands/` orada). Komutlardaki `${CLAUDE_PLUGIN_ROOT}` ifadelerini de bu dizinle değiştir.
+
+**claude.ai (web/masaüstü sohbet) ortamı:** Ev dizininde `~/Documents` yoksa ya da yazılamıyorsa (sanal makine) `$U` olarak çalışma/çıktı klasörünü kullan (ör. `/mnt/user-data/outputs/Backlink Finder`), `--open` ve `--link-dir` kullanma; Excel'leri dosya olarak kullanıcıya sun (indirilebilir). Önceki ayların Excel'leri bu ortamda kalıcı değildir; bu yüzden 4. soruda önceki Excel'i mutlaka iste ve yeni ayı o dosyanın üzerine ekleyip geri ver.
 
 ## Adım -1: Sürüm ve kota kontrolü (her çalıştırmada ilk iş, atlanamaz)
 
