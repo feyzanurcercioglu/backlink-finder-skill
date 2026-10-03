@@ -48,17 +48,19 @@ Plugin ayrıca iki hook ile aynı kontrolü yapar (`hooks/hooks.json`): skill ç
 
 ## 0. Başlangıç: kullanıcıya sor
 
-Skill çağrıldığında, mesajda verilmemiş olanları **tek bir mesajda** sor (eksik olanı varsayma):
+Skill çağrıldığında, mesajda verilmemiş olanları **tek bir mesajda**, aşağıdaki 5 soru olarak sor (eksik olanı varsayma). **Bu 5 sorunun dışında dosya ya da liste isteme.** Özellikle aracı mecra Excel'ini **asla sorma**: plugin'in içinde gelir (`data/mecra_listesi.xlsx`) ve yönetici her ay günceller.
 
 1. **Hangi marka?** (domain ya da marka adı)
 2. **Bu ayın bütçesi?** (TL, KDV hariç; her ay değişir, profildeki eski bütçeyi kullanma)
-3. **Son 6 ayda bu marka için çalışılan siteler?** (ay + domain listesi yapıştırılabilir, ör. "Nisan 2026 webanne.com")
-4. **Daha önce yapılmış backlink çalışması Excel'i var mı?** Varsa dosya yolunu ister (birden fazla olabilir). Bu dosyalardan geçmiş aylarda kullanılan siteler ve kelimeler okunur.
-5. **Geçen ay (ve son aylarda) hangi kelimelere backlink çalışması yapıldı?** Kelime listesi yapıştırılabilir. Önceki Excel verildiyse ya da markanın Internal Excel'i varsa oradan okunan listeyi göster ve "eksik/fazla var mı?" diye teyit ettir. Geçen ay backlink alan kelimeler bu ay seçilmez (aynı kelimeye üst üste link almak yerine sıradaki öncelikli kelimeler desteklenir); kullanıcı açıkça isterse istisna yapılır.
+3. **Son 6 ayda bu marka için çalışılan siteler?** (ay + domain listesi yapıştırılabilir, ör. "Nisan 2026 webanne.com"; hiç yoksa "yok")
+4. **Önceki aylarda yapılmış backlink çalışması Excel'iniz var mı?** (o markaya ait eski plan/rapor dosyası; varsa dosya yolu, yoksa "yok"). Bu, mecra listesi değildir; bu dosyalardan geçmiş aylarda kullanılan siteler ve kelimeler okunur.
+5. **Geçen ay (ve son aylarda) hangi kelimelere backlink çalışması yapıldı?** Kelime listesi yapıştırılabilir; bilinmiyorsa "yok". Önceki Excel verildiyse ya da markanın Internal Excel'i varsa oradan okunan listeyi göster ve "eksik/fazla var mı?" diye teyit ettir. Geçen ay backlink alan kelimeler bu ay seçilmez (aynı kelimeye üst üste link almak yerine sıradaki öncelikli kelimeler desteklenir); kullanıcı açıkça isterse istisna yapılır.
 
-Sorarken şunları da bildir:
-- Kullanılacak mecra listesi: `data/mecra_listesi.json`'daki `kaynak` ve `kullanim_ayi` (ör. "Eylül 2026 mecra listesi, Ekim çalışmaları için"). Çalışma ayı listenin `kullanim_ayi`'ndan farklıysa uyar: "Plugin'deki liste <ay> için; güncel listeyi plugin yöneticisi yükleyene kadar bununla mı devam edelim, yoksa elinde yeni liste dosyası var mı?" Kullanıcı yeni dosya verirse o dosyayı kullan.
-- Markanın `$U/<Marka>/<Marka>_Backlink_Internal.xlsx` dosyası zaten varsa: "Önceki aylarınız (Ekim 2026, ...) bu dosyada; son 6 ayı oradan da okuyacağım, yeni ay ayrı sayfa olarak eklenecek."
+"Yok" cevabı tamdır; aynı soruyu tekrar sorma ve başka bir dosya isteme, mevcut bilgiyle devam et.
+
+Soruların altında şunları **bilgi olarak** yaz (soru değil):
+- "Siteler plugin'deki **<kaynak>** listesinden seçilecek (<kullanim_ayi> çalışmaları için)." (`data/mecra_listesi.json`'dan). Çalışma ayı listenin `kullanim_ayi`'ndan farklıysa dosya isteme; sadece belirt: "Plugin'deki liste <liste_ayi> listesi; yönetici yeni listeyi yükleyene kadar bununla çalışıyorum." Kullanıcı kendiliğinden yeni bir liste dosyası verirse onu kullan.
+- Markanın `$U/<Marka>/<Marka>_Backlink_Internal.xlsx` dosyası zaten varsa: "Önceki aylarınız (Ekim 2026, ...) bu dosyada; son 6 ayı ve geçmiş kelimeleri oradan da okuyacağım, yeni ay ayrı sayfa olarak eklenecek."
 
 Opsiyonel girdiler (sorma, verilirse kullan): çalışma ayı (varsayılan içinde bulunulan ay), kullanıcının belirlediği kelimeler, DR alt sınırı (varsayılan 25; 25'in altına ancak açık talimatla inilir), güncel DR/trafik listesi.
 
@@ -357,6 +359,6 @@ Bütçe profile yazılmaz; her ay sorulur.
 - **Mecra Excel'inde fiyat sütunu tanınmadı:** Sütun adlarını göster, sor.
 - **Bütçe dolmuyor:** Önce "Bütçe doluluğu" adımlarını uygula (tüm havuzda kategori taraması dahil). Yine dolmuyorsa elenme dökümünü göster ve kural esnetme seçeneklerini sor; yarı boş planı kendiliğinden sunma.
 - **Bütçe yetmiyor / aday çok az:** Kaç sitenin elendiğini aşama aşama göster, alternatif sun (DR üst sınırını açmak, bütçe artışı, link sayısı fazla sitelere yönelmek). DR 25 alt sınırını ve son 6 ay kuralını kendiliğinden gevşetme.
-- **Mecra listesi eski ay için:** `data/mecra_listesi.json`'daki `kullanim_ayi` çalışma ayından farklıysa kullanıcıya söyle; yeni dosya verirse onu kullan, yoksa onayıyla mevcut listeyle devam et.
+- **Mecra listesi eski ay için:** `data/mecra_listesi.json`'daki `kullanim_ayi` çalışma ayından farklıysa kullanıcıya bilgi olarak söyle ve mevcut listeyle devam et; dosya isteme. Kullanıcı kendiliğinden yeni dosya verirse onu kullan.
 - **Excel dosyası açık/kilitli:** Kaydetme hatası alınırsa kullanıcıdan Excel'i kapatmasını iste ve tekrar çalıştır.
 - **Son 6 ay listesi gelmedi:** Sor; kullanıcı "yok/ilk ay" derse markanın Internal Excel'ini ve verdiği önceki çalışma Excel'lerini kontrol edip devam et.
