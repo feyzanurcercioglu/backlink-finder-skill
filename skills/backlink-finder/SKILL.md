@@ -40,6 +40,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/surum_kontrol.py"
 
 - `SURUM_GUNCEL` → devam et.
 - `SURUM_ESKI` (çıkış kodu 2) → **dur.** Script'in yazdığı güncelleme talimatını kullanıcıya aynen ver ve çalışmayı başlatma; kullanıcı ısrar etse bile eski sürümle plan hazırlama, sadece güncellemeye yönlendir. Eski sürümde mecra listesi ve kurallar güncel olmadığı için çıkan plan hatalı olur.
+- `ESKI_KOPYA <dizinler>` → bilgisayarda eski Backlink skill kopyası var (ör. `~/.claude/skills/backlink-finder`). Kullanıcıya script'in verdiği `rm -rf ...` komutunu ve claude.ai'daki eski "backlink-skill"i kapatmasını söyle; bu kopyalar `/backlink-skill` ya da `/backlink-finder` ile çağrıldığında eski soruları (ör. aracı mecra Excel'i) sorar. Çalışmaya devam edebilirsin.
 - `SURUM_BILINMIYOR` (internet yok / GitHub erişilemez) → kullanıcıya sürümün doğrulanamadığını söyle ve devam etmek isteyip istemediğini sor.
 
 **Ahrefs kotası:** Sürüm güncelse `mcp__ahrefs__subscription-info-limits-and-usage` ile kalan birimi kontrol et. Bir çalışma tipik olarak ~5.000-8.000 birim harcar (toplu tarama + her aday için zararlı sorgu ve 18 ay geçmiş). Kalan birim yetersizse ya da çalışma sırasında herhangi bir Ahrefs çağrısı kota/limit hatası verirse kullanıcıya **"Ahrefs MCP kotası dolduğu için DataForSEO ile devam ediyorum"** yaz ve `${CLAUDE_PLUGIN_ROOT}/references/dataforseo_fallback.md`'deki karşılıklarla devam et (DR, trafik, zararlı sorgu, 18 ay geçmiş). DataForSEO da bağlı değilse dur ve kullanıcıya söyle; doğrulanmamış site önerme.

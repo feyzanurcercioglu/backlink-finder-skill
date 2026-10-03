@@ -1,0 +1,20 @@
+{
+  "domain": "mmkozmetik.com",
+  "brand_tokens": ["mmkozmetik", "mm kozmetik"],
+  "sector": "kozmetik / parfüm perakende",
+  "vertical": "kozmetik / parfüm / makyaj / cilt bakımı",
+  "matching_site_categories": ["Güzellik", "Makyaj", "Cilt Bakımı", "Kişisel Bakım", "Parfüm", "Moda ve Güzellik"],
+  "seomonitor_campaign_id": 99547,
+  "primary_device": "mobile",
+  "priority_group_ids": [67496],
+  "priority_group_names": ["Öncelikli Kelimeler"],
+  "main_categories": ["Parfüm", "Makyaj", "Cilt Bakımı", "Vücut Bakımı", "Güneş Bakımı"],
+  "secondary_category_paths": ["blog", "garage.mmkozmetik"],
+  "core_category_paths": ["parfum", "versace", "ruj", "fondoten", "maskara", "kapatici", "nemlendirici", "serum", "bb-ve-cc-krem"],
+  "minor_category_paths": ["gunes", "deodorant"],
+  "seasonal": {"Güneş Bakımı": "Mayıs-Ağustos"},
+  "dr_min": 25,
+  "content_fee": 750,
+  "avoid_sites": [],
+  "notes": "Öncelik grubu 'Öncelikli Kelimeler' (67496) varsayıldı; kullanıcı onayı bekleniyor (2026-10-01). Marka bir perakendeci; Versace/Clarins vb. kelimeler satılan marka kelimesi olarak jenerik sayılır, sadece mmkozmetik brand kabul edilir."
+}

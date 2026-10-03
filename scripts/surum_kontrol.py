@@ -37,6 +37,23 @@ Sonra Claude Code'u yeniden başlatıp çalışmayı tekrar isteyin.
 Kalıcı çözüm: /plugin > Marketplaces > {MARKET} > Enable auto-update"""
 
 
+LEGACY_DIRS = [os.path.expanduser('~/.claude/skills/backlink-finder'), os.path.expanduser('~/.claude/skills/backlink-skill')]
+LEGACY_CMD = re.compile(r'^/(backlink-skill|backlink-finder)(\s|$)', re.I)   # '/backlink-finder:backlink-finder' hariç
+LEGACY_MSG = """⛔ Bu eski Backlink komutu ({cmd}). Eski sürüm aracı mecra Excel'ini sorar ve güncel kuralları içermez.
+
+Doğru komut:  /backlink-finder:backlink-finder
+(ya da doğrudan yazın: "Dagi için Kasım backlink çalışması hazırla")
+
+Eski kopyaları kaldırın:
+  - Terminal: rm -rf ~/.claude/skills/backlink-finder ~/.claude/skills/backlink-skill
+  - claude.ai > Settings > Capabilities > Skills: "backlink-skill"i kapatın ya da silin
+Sonra Claude Code'u yeniden başlatın."""
+
+
+def legacy_copies():
+    return [d for d in LEGACY_DIRS if os.path.isdir(d)]
+
+
 def vtuple(v):
     return tuple(int(x) for x in re.findall(r'\d+', str(v))[:3]) or (0,)
 
@@ -65,10 +82,10 @@ def check():
 def relevant(hook, payload):
     if hook == 'pretool':
         name = str((payload.get('tool_input') or {}).get('skill', ''))
-        return PLUGIN in name
+        return name.startswith(PLUGIN + ':')
     if hook == 'prompt':
         prompt = str(payload.get('prompt', '')).strip().lower()
-        return prompt.startswith(f'/{PLUGIN}')
+        return prompt.startswith(f'/{PLUGIN}:')
     return True
 
 
@@ -81,6 +98,16 @@ if __name__ == '__main__':
             payload = json.load(sys.stdin)
         except Exception:  # noqa: BLE001
             payload = {}
+        if a.hook == 'prompt':
+            m = LEGACY_CMD.match(str(payload.get('prompt', '')).strip())
+            if m:
+                print(LEGACY_MSG.format(cmd='/' + m.group(1)), file=sys.stderr)
+                sys.exit(2)
+        if a.hook == 'pretool':
+            name = str((payload.get('tool_input') or {}).get('skill', ''))
+            if name.split(':')[-1] == 'backlink-skill' or name == 'backlink-finder':
+                print(LEGACY_MSG.format(cmd=name), file=sys.stderr)
+                sys.exit(2)
         if not relevant(a.hook, payload):
             sys.exit(0)
     status, loc, rem = check()
@@ -97,4 +124,9 @@ if __name__ == '__main__':
         sys.exit(0)
     if not a.hook:
         print(f'SURUM_GUNCEL {loc}')
+        old = legacy_copies()
+        if old:
+            print('ESKI_KOPYA ' + ' '.join(old))
+            print('⚠ Bilgisayarınızda eski Backlink skill kopyası var: ' + ', '.join(old)
+                  + '\n  Kaldırmak için: rm -rf ' + ' '.join(old), file=sys.stderr)
     sys.exit(0)

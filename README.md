@@ -39,9 +39,10 @@ Komutları **tek tek** kopyalayıp her birinden sonra Enter'a basın; ikisini bi
 Claude Code'u yeniden başlatın. Önerilen: `/plugin` > **Marketplaces** > `inbound-seo` >
 **Enable auto-update**. Böylece her ay yeni mecra listesi ve kural güncellemeleri kendiliğinden gelir.
 
-> Daha önce `git clone ... ~/.claude/skills/backlink-finder` ile kurduysanız o klasörü silin
-> (`rm -rf ~/.claude/skills/backlink-finder`). claude.ai'daki eski "backlink-skill"i de devre dışı
-> bırakın; aynı taleplerde çakışırlar.
+> **Doğru komut `/backlink-finder:backlink-finder`.** `/backlink-skill` ya da `/backlink-finder` eski sürümlerdir ve
+> aracı mecra Excel'ini sorar; plugin bu komutları engeller. Eski kopyaları kaldırın:
+> `rm -rf ~/.claude/skills/backlink-finder ~/.claude/skills/backlink-skill` ve claude.ai > Settings > Capabilities >
+> Skills'te "backlink-skill"i kapatın.
 
 ## Güncelleme
 
