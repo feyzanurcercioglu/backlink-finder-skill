@@ -57,6 +57,11 @@ claude plugin marketplace update inbound-seo && claude plugin update backlink-fi
 ya da Claude Code içinde önce `/plugin marketplace update inbound-seo`, sonra `/plugin` > **Installed** >
 `backlink-finder` > **Update now**. Ardından Claude Code'u yeniden başlatın.
 
+## Güncel mecra listesi
+
+Siteler yalnızca plugin içindeki aylık aracı listesinden seçilir: **(Internal) Inbound x Backlink Siteleri - Eylül 2026**
+(Whitepress+, Exclion+, LinkRaiser+; Ekim 2026 çalışmaları için). Liste her ay yönetici tarafından güncellenir.
+
 ## Kullanım
 
 ```

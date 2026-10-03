@@ -96,6 +96,8 @@ Script ayrıca Excel'lerdeki "Keyword" sütunundan son 6 ayın kelimelerini `$W/
 
 ### 2. Havuz
 
+**Site kaynağı:** Siteler **yalnızca** plugin'deki aylık mecra listesinden seçilir: `$P/data/mecra_listesi.xlsx` (şu an "(Internal) Inbound x Backlink Siteleri - Eylül 2026.xlsx", Whitepress+ / Exclion+ / LinkRaiser+ sayfaları; hangi ayın listesi olduğu `data/mecra_listesi.json`'da). Listede olmayan bir siteyi (web aramasında bulunan, önceki aylardan hatırlanan vb.) önerme: fiyatı ve aracısı belli değildir. Kullanıcıya her çalışmada "Siteler <kaynak> listesinden seçiliyor" diye yaz.
+
 ```bash
 python3 "$P/scripts/build_pool.py" "$P/data/mecra_listesi.xlsx" [--metrics "<dr_trafik_listesi>.xlsx"] --out "$W/pool.csv"
 ```
@@ -334,6 +336,7 @@ Bütçe profile yazılmaz; her ay sorulur.
 
 ## Kurallar (özet)
 
+0. **Site kaynağı:** Siteler yalnızca `data/mecra_listesi.xlsx`'ten (aylık aracı listesi) seçilir; listede olmayan site önerilmez.
 1. **Son 6 ay:** Kullanıcının verdiği listedeki hiçbir site önerilmez, yedek listede bile.
 2. **Kategori eşleşmesi:** Menüsünde markanın dikeyiyle doğrudan eşleşen kategori (moda markası → Moda; teknoloji → Teknoloji) olmayan site önerilmez, yedek listede de. Komşu kategori ya da dağınık yazılar yetmez.
 3. **DR 25 altı** önerilmez. DR ve trafik öneri anında Ahrefs'ten doğrulanır; aracı listesindeki DR karar için kullanılmaz.
