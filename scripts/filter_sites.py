@@ -12,6 +12,7 @@ Filtre sırası (her adımda kaç site elendiği raporlanır):
   5. DR < dr-min (varsayılan 25) ve DR > dr-max. DR = kullanıcının verdiği değer; aracı DR'ı kullanılmaz.
      Güvenilir DR'ı olmayanlar dr_missing.csv'ye yazılır (önceki filtrelerden geçmiş, DR'ı çekilmeye değer liste)
   6. Opsiyonel trafik alt sınırı (--traffic-min)
+  Ayrıca haber/gazete siteleri `haber_sitesi=True` işaretlenir (elenmez; ana plana alınmaz, sadece alternatif).
 """
 import argparse
 import json
@@ -26,6 +27,17 @@ def norm_domain(v):
     s = re.sub(r'^https?://', '', s)
     s = re.sub(r'^www\.', '', s)
     return s.split('/')[0].strip()
+
+
+NEWS_TOKENS = ('haber', 'gazete', 'news', 'manset', 'sondakika', 'gundem', 'ajans', 'postasi', 'ekspres', 'express',
+               'press', 'times', 'olay', 'tv5', 'habertv', 'bulten', 'expres')
+
+
+def is_news(domain, category=None):
+    """Haber/gazete sitesi tahmini, sadece domain adından (aracı teması güvenilmez: annebebek.com.tr "haber"
+    temalı ama anne-bebek dergisi). Kesin karar category_scan'deki menü kontrolüyle verilir."""
+    d = str(domain).lower()
+    return any(t in d for t in NEWS_TOKENS)
 
 
 def read_exclude(path):
@@ -120,6 +132,8 @@ if __name__ == '__main__':
         log.append(f'- Trafik < {a.traffic_min}: {low_t.sum()} site elendi')
         df = df[~low_t]
 
+    df['haber_sitesi'] = [is_news(d) for d in df['domain']]
+    log.append(f'- Haber sitesi olarak işaretlenen: {int(df["haber_sitesi"].sum())} site (ana plana alınmaz, sadece alternatif)')
     df.sort_values(['dr', 'sale_price'], ascending=[False, True]).to_csv(a.out, index=False)
     log.append(f'Kalan aday: {len(df)} site → {a.out}')
     print('\n'.join(log))

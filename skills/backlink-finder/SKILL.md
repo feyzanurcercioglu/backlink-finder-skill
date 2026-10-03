@@ -16,6 +16,7 @@ Her ay markalar için backlink çalışması yapılır. Bu skill o ayın planın
 
 - **SEOmonitor MCP** (`mcp__claude_ai_SeoMonitor__*`) - kelime, sıra, değişim, hacim, oturum verisi. Birincil ve zorunlu kaynak.
 - **Ahrefs MCP** (`mcp__ahrefs__*`) - önerilecek her sitenin DR ve trafiğini öneri anında doğrulamak (`batch-analysis`), sitenin hangi sorgularda ilk 5'te olduğunu bulmak (`site-explorer-organic-keywords`) ve zararlı site kontrolü.
+- **DataForSEO MCP** (yedek) - Ahrefs kotası dolduğunda aynı kontroller için. Ayrıntı: `${CLAUDE_PLUGIN_ROOT}/references/dataforseo_fallback.md`.
 - WebFetch / web arama - aday sitelerin menü ve içerik kontrolü.
 - Python 3 + `pandas`, `openpyxl`. İlk adımda `python3 -c "import pandas, openpyxl"` ile kontrol et; eksikse `pip3 install --user pandas openpyxl` çalıştır.
 
@@ -29,7 +30,7 @@ Her ay markalar için backlink çalışması yapılır. Bu skill o ayın planın
 
 Aşağıdaki komutlarda `$P="${CLAUDE_PLUGIN_ROOT}"`, `$U="$HOME/Documents/Backlink Finder"`, `$W="$U/<Marka>/calisma/<Ay_Yıl>"`.
 
-## Adım -1: Sürüm kontrolü (her çalıştırmada ilk iş, atlanamaz)
+## Adım -1: Sürüm ve kota kontrolü (her çalıştırmada ilk iş, atlanamaz)
 
 Hiçbir şey sormadan, hiçbir veri çekmeden önce:
 
@@ -41,6 +42,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/surum_kontrol.py"
 - `SURUM_ESKI` (çıkış kodu 2) → **dur.** Script'in yazdığı güncelleme talimatını kullanıcıya aynen ver ve çalışmayı başlatma; kullanıcı ısrar etse bile eski sürümle plan hazırlama, sadece güncellemeye yönlendir. Eski sürümde mecra listesi ve kurallar güncel olmadığı için çıkan plan hatalı olur.
 - `SURUM_BILINMIYOR` (internet yok / GitHub erişilemez) → kullanıcıya sürümün doğrulanamadığını söyle ve devam etmek isteyip istemediğini sor.
 
+**Ahrefs kotası:** Sürüm güncelse `mcp__ahrefs__subscription-info-limits-and-usage` ile kalan birimi kontrol et. Bir çalışma tipik olarak ~5.000-8.000 birim harcar (toplu tarama + her aday için zararlı sorgu ve 18 ay geçmiş). Kalan birim yetersizse ya da çalışma sırasında herhangi bir Ahrefs çağrısı kota/limit hatası verirse kullanıcıya **"Ahrefs MCP kotası dolduğu için DataForSEO ile devam ediyorum"** yaz ve `${CLAUDE_PLUGIN_ROOT}/references/dataforseo_fallback.md`'deki karşılıklarla devam et (DR, trafik, zararlı sorgu, 18 ay geçmiş). DataForSEO da bağlı değilse dur ve kullanıcıya söyle; doğrulanmamış site önerme.
+
 Plugin ayrıca iki hook ile aynı kontrolü yapar (`hooks/hooks.json`): skill çağrısı (PreToolUse) ve `/backlink-finder` ile başlayan mesajlar (UserPromptSubmit) eski sürümde engellenir.
 
 ## 0. Başlangıç: kullanıcıya sor
@@ -51,6 +54,7 @@ Skill çağrıldığında, mesajda verilmemiş olanları **tek bir mesajda** sor
 2. **Bu ayın bütçesi?** (TL, KDV hariç; her ay değişir, profildeki eski bütçeyi kullanma)
 3. **Son 6 ayda bu marka için çalışılan siteler?** (ay + domain listesi yapıştırılabilir, ör. "Nisan 2026 webanne.com")
 4. **Daha önce yapılmış backlink çalışması Excel'i var mı?** Varsa dosya yolunu ister (birden fazla olabilir). Bu dosyalardan geçmiş aylarda kullanılan siteler ve kelimeler okunur.
+5. **Geçen ay (ve son aylarda) hangi kelimelere backlink çalışması yapıldı?** Kelime listesi yapıştırılabilir. Önceki Excel verildiyse ya da markanın Internal Excel'i varsa oradan okunan listeyi göster ve "eksik/fazla var mı?" diye teyit ettir. Geçen ay backlink alan kelimeler bu ay seçilmez (aynı kelimeye üst üste link almak yerine sıradaki öncelikli kelimeler desteklenir); kullanıcı açıkça isterse istisna yapılır.
 
 Sorarken şunları da bildir:
 - Kullanılacak mecra listesi: `data/mecra_listesi.json`'daki `kaynak` ve `kullanim_ayi` (ör. "Eylül 2026 mecra listesi, Ekim çalışmaları için"). Çalışma ayı listenin `kullanim_ayi`'ndan farklıysa uyar: "Plugin'deki liste <ay> için; güncel listeyi plugin yöneticisi yükleyene kadar bununla mı devam edelim, yoksa elinde yeni liste dosyası var mı?" Kullanıcı yeni dosya verirse o dosyayı kullan.
@@ -62,8 +66,9 @@ Opsiyonel girdiler (sorma, verilirse kullan): çalışma ayı (varsayılan için
 
 ```
 [-1] Sürüm kontrolü (surum_kontrol.py): eskiyse DUR, güncelleme talimatı ver
-[0] Marka, bütçe, son 6 ay siteleri, önceki çalışma Excel'leri → dönem tarihleri
-[1] Geçmiş: önceki Excel'ler + markanın Internal Excel'i + kullanıcı listesi → son 6 ay (gecmis_oku.py)
+[-1b] Ahrefs kota kontrolü: yetersizse "DataForSEO ile devam ediyorum" de, yedek yola geç
+[0] Marka, bütçe, son 6 ay siteleri, önceki çalışma Excel'leri, geçen ayın kelimeleri → dönem tarihleri
+[1] Geçmiş: önceki Excel'ler + markanın Internal Excel'i + kullanıcı listesi → son 6 ay siteleri ve kelimeleri (gecmis_oku.py)
 [2] Plugin'deki mecra listesi → birleşik havuz (build_pool.py)
 [3] Filtre: son 6 ay, kara listeler, dil, bütçe tavanı, DR ön eleme (filter_sites.py)
 [4] SEOmonitor → önceki ayın kelimeleri → öncelik grubu + dalgalanma + kategori (keyword_select.py)
@@ -82,12 +87,12 @@ Son 6 ay listesi üç kaynağın birleşimidir:
 2. Kullanıcının verdiği önceki çalışma Excel'leri ve markanın kendi Internal Excel'i:
    ```bash
    python3 "$P/scripts/gecmis_oku.py" --files "<önceki.xlsx>" "$U/<Marka>/<Marka>_Backlink_Internal.xlsx" \
-     --month "<Ay Yıl>" --brand-domain <domain> --out "$W/son6ay_excel.txt"
+     --month "<Ay Yıl>" --brand-domain <domain> --out "$W/son6ay_excel.txt" --kw-out "$W/gecmis_kelimeler.txt"
    ```
    Script sayfa adından ayı okur ("Ekim 2026", "Ekim24", "Mart 2026"); ayı anlaşılamayan sayfaları raporlar, onları kullanıcıya sor.
 3. İki liste arasında fark varsa (Excel'de var, kullanıcının listesinde yok ya da tersi) kullanıcıya göster; ikisini de hariç tutmak varsayılandır.
 
-Önceki Excel'lerdeki kelimeler de faydalıdır: son aylarda hangi kelimeye kaç kez link alındığını görmek için oku (SEOmonitor'daki "Backlink 2026 > ..." gruplarıyla birlikte).
+Script ayrıca Excel'lerdeki "Keyword" sütunundan son 6 ayın kelimelerini `$W/gecmis_kelimeler.txt`'e (`ay<TAB>kelime`) yazar ve geçen ayın kelimelerini ekrana basar. Bunu kullanıcının 5. sorudaki cevabıyla birleştir; geçen ayın kelimelerini `$W/gecen_ay_kelimeler.txt`'e (her satıra bir kelime) yaz. Son aylarda hangi kelimeye kaç kez link alındığını da buradan ve SEOmonitor'daki "Backlink 2026 > ..." gruplarından gör.
 
 ### 2. Havuz
 
@@ -128,7 +133,7 @@ Kullanıcı bir trafik alt sınırı belirtirse `--traffic-min <değer>` ekle; b
 
 ```bash
 python3 "$P/scripts/keyword_select.py" --in "$W/kw_raw.json" --brand "<marka>,<marka varyasyonu>" --top 20 \
-  --profile "<profil.json>" --volatility "$W/volatility.json" --out "$W/kw_scored.json"
+  --profile "<profil.json>" --volatility "$W/volatility.json" --last-kw "$W/gecen_ay_kelimeler.txt" --out "$W/kw_scored.json"
 ```
 
 **Öncelik sırası (kelime seçerken):**
@@ -194,10 +199,9 @@ Bütçe aralığında kategorisi eşleşen site azsa önce aşağıdaki "Bütçe
 - **Bütçe doluluğu zorunlu:** Toplam bütçeyi aşamaz ve bütçenin en az ~%87'sini kullanmalı (15.000 TL için 13.000-15.000; 10.000 için 8.700-10.000). Yarısı boş bir plan (ör. 15.000'de 6.500) sunulmaz. Hedefe ulaşmadan önce sırayla:
   1. `category_scan.py`'yi tüm adaylar üzerinde çalıştır (fiyat sınırı = kalan bütçe - 750); tema/isim ön elemesi yapma.
   2. Kalan bütçeye tek başına oturan bir site (ör. 8.500 kalan → 7.750'lik 3 linkli site) ile iki-üç küçük siteyi karşılaştır; alan çeşitliliği ve trafik dengesine göre seç.
-  3. Haber sitelerini de tara (en fazla 1-2, menüde Güzellik/Moda vb. kategorisi olanlar).
   Kurallar (kategori eşleşmesi, DR 25, zararlı site, son 6 ay) bütçeyi doldurmak için gevşetilmez. Bütün havuz tarandığı halde hedefe ulaşılamıyorsa, sunumda kaç sitenin hangi aşamada elendiğini göster ve kullanıcıya kuralı esnetecek seçenekleri sor (ör. "DR 20 olan yuksektopuklar eklenirse 13.750 olur").
 - Öncelik: kategori eşleşmesi (zorunlu) > trafik/DR sağlığı > link başına maliyet (çok linkli siteler aynı fiyatla daha fazla kelime taşır).
-- Haber/gazete siteleri pakette en fazla 1-2 adet; niş ve sektörel bloglar önce gelir.
+- **Haber siteleri ana plana alınmaz.** Haber/gazete sitelerinin moda, güzellik gibi sayfaları magazinsel içerik taşır; markanın kategori bağlamını sağlamaz (ör. haberdenizli.com'un "giyim" ve "moda-saglik" sayfaları). `filter_sites.py` (domain adı) ve `category_scan.py` (menüde Gündem, Son Dakika, Asayiş, Siyaset... olması) bunları `haber_sitesi=True` işaretler; aracının "haber" teması tek başına kanıt değildir (annebebek.com.tr "haber" temalı ama anne-bebek dergisi). Haber siteleri yalnızca alternatif listede, "haber sitesi" etiketiyle ve gerekçesiyle gösterilebilir. Niş ve sektörel bloglar/dergiler ana planı oluşturur.
 - Aynı hedef URL'e giden kelimeler farklı sitelere dağıtılır (anchor ve kaynak çeşitliliği).
 - Çok linkli sitede kelimeler tercihen farklı URL'lere gider.
 
@@ -337,6 +341,9 @@ Bütçe profile yazılmaz; her ay sorulur.
 5. **Fiyat** sadece "Markaya yansıtılacak fiyat" sütunundan; içerik site başına 750 TL. Toplam bütçeyi aşmaz ve en az ~%87'sini kullanır.
 6. **İlk 3'teki kelimeler** (dönem sonu sıra 1-3) seçilmez. **Kelimeler** markanın öncelikli gruplarından ve ana menü kategorilerinden seçilir; önce dalgalanan, sonra çekirdek kategori kelimeleri gelir; yan kategori kelimeleri (aksesuar vb.) seçilmez. Kelimeler SEOmonitor'dan, çalışma ayından önceki takvim ayı verisiyle. Jenerik kategori kelimeleri öncelikli, brand kelimeler hariç. Çalışma ayının sezonuna uymayan kategoriler alınmaz. Sıra/hacim asla tahmin edilmez; SEOmonitor'a erişilemezse kullanıcıdan export iste.
 7. **Dil:** TR markada yabancı dil (EN) sayfasındaki siteler elenir.
+7a. **Haber siteleri** ana plana girmez; sadece alternatif listede etiketli gösterilebilir.
+7b. **Geçen ay backlink alan kelimeler** bu ay seçilmez (kullanıcıya sorulur, Excel'den de okunur).
+7c. **Ahrefs kotası dolarsa** kullanıcıya yazılarak DataForSEO ile devam edilir; hiçbir site doğrulanmadan önerilmez.
 8. **Inbound Notu** her sitede zorunlu; doğrulanmış kategori, trafik ve ilk 5 sorgu bilgisinden kurulur, fiyat/aracı/iç değerlendirme içermez.
 9. **Çıktı** markanın `~/Documents/Backlink Finder/<Marka>/` altındaki Internal ve Shared Excel'lerine ayın sayfası olarak yazılır; plugin dizinine hiçbir şey yazılmaz.
 10. **Çıktı dili** Türkçe; em dash yerine tire kullan.

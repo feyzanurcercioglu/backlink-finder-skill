@@ -93,6 +93,7 @@ if __name__ == '__main__':
     ap.add_argument('--top', type=int, default=15)
     ap.add_argument('--out', default='kw_scored.json')
     ap.add_argument('--profile', help='Marka profili JSON (priority_group_ids, secondary/core/minor_category_paths)')
+    ap.add_argument('--last-kw', help='Geçen ay backlink alan kelimeler (her satıra bir kelime ya da "ay\\tkelime"); ELENİR')
     ap.add_argument('--min-rank', type=int, default=4, help='Bu sıradan iyi (küçük) kelimeler elenir; varsayılan ilk 3 hariç')
     ap.add_argument('--volatility', help='Dönem içi günlük sıra dalgalanması JSON (keyword -> range, moves, ...)')
     a = ap.parse_args()
@@ -112,6 +113,15 @@ if __name__ == '__main__':
     if a.profile:
         core = [x.lower() for x in prof.get('core_category_paths', [])]
         minor = [x.lower() for x in prof.get('minor_category_paths', [])]
+    last_kw = set()
+    if a.last_kw:
+        for line in open(a.last_kw, encoding='utf-8'):
+            k = line.strip().split('\t')[-1].strip().lower()
+            if k:
+                last_kw.add(k)
+        before = len(rows)
+        rows = [r for r in rows if r['keyword'].strip().lower() not in last_kw]
+        print(f'Geçen ay backlink alan kelimeler çıkarıldı: {before - len(rows)} kelime')
     out = []
     for r in rows:
         res = score(r, brand, vols.get(r['keyword']), core, minor, a.min_rank)

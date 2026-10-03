@@ -6,7 +6,8 @@ Kullanım:
     python category_scan.py --in candidates.csv --terms "guzellik,makyaj,cilt-bakimi,kozmetik" \
         [--max-price 7750] [--min-price 0] [--workers 24] --out category_hits.csv
 
-Çıktı: domain, sale_price, link_count, source, status, matches (bulunan kategori URL'leri), bahis_sinyali
+Çıktı: domain, sale_price, link_count, source, status, matches (bulunan kategori URL'leri), bahis_sinyali,
+      haber_menusu / haber_sitesi (Gündem, Son Dakika, Asayiş, Siyaset... menüsü: haber sitesi, ana plana alınmaz)
 """
 import argparse
 import concurrent.futures as cf
@@ -19,6 +20,8 @@ import pandas as pd
 
 UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
 BET = re.compile(r'(bahis|casino|iddaa|deneme bonusu|slot oyun|canlı bahis|bet[0-9]{2,})', re.I)
+NEWS_MENU = ['gundem', 'son-dakika', 'sondakika', 'asayis', 'siyaset', 'politika', 'yerel', 'dunya', 'turkiye',
+             'ekonomi', 'spor', 'resmi-ilanlar', 'yazarlar', 'koseyazarlari']
 CTX = ssl.create_default_context()
 CTX.check_hostname = False
 CTX.verify_mode = ssl.CERT_NONE
@@ -59,8 +62,12 @@ def scan(domain, terms):
             if re.search(rf'(^|/|-){re.escape(t)}(/|-|$)', path) or (len(label) < 30 and t.replace('-', ' ') in label):
                 hits.add(full.split('?')[0])
     bet = BET.findall(html)
+    paths = {tr_fold(urlparse(urljoin(final, h)).path).strip('/').split('/')[-1]
+             for h in re.findall(r'<a[^>]+href=["\']([^"\'#]+)', html, re.I)}
+    news_hits = [n for n in NEWS_MENU if any(p == n or p.startswith(n + '-') or p.endswith('-' + n) for p in paths)]
     return {'domain': domain, 'status': status, 'matches': ' | '.join(sorted(hits)[:6]),
-            'bahis_sinyali': ','.join(sorted({b.lower() for b in bet}))[:60]}
+            'bahis_sinyali': ','.join(sorted({b.lower() for b in bet}))[:60],
+            'haber_menusu': len(news_hits) >= 3}
 
 
 if __name__ == '__main__':
@@ -84,5 +91,12 @@ if __name__ == '__main__':
     hit = out[out['matches'] != '']
     print(f'{len(df)} site tarandı → {len(hit)} sitede eşleşen kategori linki, '
           f'{(out["status"].astype(str).str.startswith("hata")).sum()} site açılamadı')
-    cols = ['domain', 'sale_price', 'link_count', 'source', 'matches', 'bahis_sinyali']
+    if 'haber_sitesi' in out:
+        out['haber_sitesi'] = out['haber_sitesi'].fillna(False).astype(bool) | out['haber_menusu'].fillna(False).astype(bool)
+    else:
+        out['haber_sitesi'] = out['haber_menusu']
+    out.to_csv(a.out, index=False)
+    hit = out[out['matches'] != '']
+    print(f'  Haber sitesi (ana plana alınmaz): {int(hit["haber_sitesi"].sum())} / {len(hit)}')
+    cols = ['domain', 'sale_price', 'link_count', 'source', 'haber_sitesi', 'matches', 'bahis_sinyali']
     print(hit.sort_values('sale_price')[cols].to_string(index=False, max_colwidth=90))

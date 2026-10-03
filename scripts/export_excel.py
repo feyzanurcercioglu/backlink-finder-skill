@@ -129,7 +129,7 @@ def write_sheet(ws, plan, internal=True):
     for s in plan['sites']:
         row += 1
         vals = [s['domain'], s['dr'], s.get('net_price'), s['site_price'], s['source'].lower(),
-                f"{len(s['keywords'])} link"]
+                f"{len(s['keywords'])} link" + (f" · DR: {s['dr_kaynak']}" if s.get('dr_kaynak') else '')]
         for col, v in enumerate(vals, 1):
             style(ws.cell(row=row, column=col, value=v), fmt='#,##0.00' if col == 3 else ('#,##0' if col == 4 else None))
         cat, cat_url = s.get('category'), s.get('category_url')

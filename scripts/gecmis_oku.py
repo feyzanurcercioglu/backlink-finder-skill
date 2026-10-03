@@ -43,6 +43,25 @@ def label(idx):
     return f'{AYLAR[idx % 12].capitalize()} {idx // 12}'
 
 
+def keywords_in_sheet(ws):
+    """'Keyword' başlıklı sütundaki kelimeler (plan tablosu)."""
+    kws = set()
+    for row in ws.iter_rows(min_row=1, max_row=min(ws.max_row, 40)):
+        for c in row:
+            if isinstance(c.value, str) and c.value.strip().lower() in ('keyword', 'anahtar kelime', 'kelime'):
+                col, r0 = c.column, c.row
+                for r in range(r0 + 1, ws.max_row + 1):
+                    v = ws.cell(row=r, column=col).value
+                    if v is None:
+                        if ws.cell(row=r, column=1).value is None:
+                            break
+                        continue
+                    if isinstance(v, str) and not v.startswith('=') and v.strip().lower() not in ('keyword',):
+                        kws.add(v.strip().lower())
+                return kws
+    return kws
+
+
 def domains_in_sheet(ws, brand):
     found = set()
     cols = None
@@ -74,15 +93,18 @@ if __name__ == '__main__':
     ap.add_argument('--brand-domain', default='')
     ap.add_argument('--default-month', help='Sayfa adı ay içermiyorsa kullanılacak ay')
     ap.add_argument('--out', default='son6ay_excel.txt')
+    ap.add_argument('--kw-out', default='gecmis_kelimeler.txt', help='Son N ayda backlink alan kelimeler (ay\tkelime)')
     a = ap.parse_args()
     cur = month_index(a.month)
     brand = a.brand_domain.lower().replace('www.', '')
-    by_month, unknown = defaultdict(set), defaultdict(set)
+    by_month, unknown, kw_month = defaultdict(set), defaultdict(set), defaultdict(set)
     for f in a.files:
         wb = load_workbook(f, read_only=False)
         for ws in wb.worksheets:
             idx = month_index(ws.title) or (month_index(a.default_month) if a.default_month else None)
             ds = domains_in_sheet(ws, brand)
+            if idx is not None:
+                kw_month[idx] |= keywords_in_sheet(ws)
             if idx is None:
                 unknown[f'{f} :: {ws.title}'] |= ds
             else:
@@ -96,3 +118,11 @@ if __name__ == '__main__':
     for k, ds in unknown.items():
         print(f'⚠ Ayı anlaşılamayan sayfa "{k}": {", ".join(sorted(ds)) or "domain yok"} (kullanıcıya hangi ay olduğunu sor)')
     print(f'→ {len(keep)} domain son {a.months} ay listesine yazıldı: {a.out}')
+    with open(a.kw_out, 'w', encoding='utf-8') as f:
+        for i in sorted(kw_month):
+            if cur - a.months <= i < cur:
+                for k in sorted(kw_month[i]):
+                    f.write(f'{label(i)}\t{k}\n')
+    last = cur - 1
+    print(f'Geçen ay ({label(last)}) backlink alan kelimeler: {", ".join(sorted(kw_month.get(last, []))) or "yok"}')
+    print(f'→ son {a.months} ayın kelimeleri: {a.kw_out}')

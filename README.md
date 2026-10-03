@@ -69,6 +69,7 @@ ya da doğrudan yazın: "Dagi için Kasım backlink çalışması hazırla". Plu
 2. Bu ayın bütçesi (KDV hariç)?
 3. Son 6 ayda bu marka için çalışılan siteler (ay + domain listesi)
 4. Daha önce yapılmış backlink çalışması Excel'i (varsa dosya yolu)
+5. Geçen ay hangi kelimelere backlink çalışması yapıldığı (Excel'den okunur, teyit edilir; bu kelimeler bu ay tekrar seçilmez)
 
 Plan sohbette tam tablo olarak gelir; aynı anda Internal + Shared Excel'ler oluşturulup açılır ve Claude Code'u açtığınız klasöre bu dosyaların kısayolları konur. Revize isterseniz Excel'deki ayın sayfası güncellenip yeniden açılır.
 
@@ -97,13 +98,16 @@ Ara dosyalar `~/Documents/Backlink Finder/<Marka>/calisma/<Ay_Yıl>/` altında t
 - **Site:** menüsünde markanın dikeyiyle doğrudan eşleşen kategori (moda → Moda, kozmetik →
   Güzellik/Makyaj, teknoloji → Teknoloji); DR ve trafik Ahrefs'ten o gün (DR 25 altı yok);
   PBN kalıbı yok; sıralama aldığı kelimelerde cinsel/bahis içerik yok; sadece son 1-3 aydır sıralama
-  alan yeni siteler yok (Ahrefs 18 ay geçmişi); son 6 ayda bu markaya kullanılmamış.
+  alan yeni siteler yok (Ahrefs 18 ay geçmişi); son 6 ayda bu markaya kullanılmamış. **Haber/gazete siteleri
+  ana plana alınmaz** (moda sayfaları magazinsel kalır); gerekirse sadece alternatif listede etiketli görünür.
+- **Ahrefs kotası dolarsa:** plugin bunu söyleyip DataForSEO ile devam eder; bu siteler Excel'de işaretlenir.
 - **Bütçe:** site ücreti + site başına 750 TL içerik; bütçeyi aşmaz, en az ~%87'sini kullanır.
 
 ## Gereksinimler
 
 - **SEOmonitor** connector (claude.ai > Settings > Connectors)
 - **Ahrefs MCP**
+- **DataForSEO MCP** (yedek; Ahrefs kotası dolduğunda kullanılır)
 - **Python 3**, `pandas`, `openpyxl` (eksikse plugin ilk çalıştırmada `pip3 install --user` ile kurar)
 
 ## Yönetici: aylık mecra listesi güncellemesi
@@ -143,6 +147,8 @@ backlink-finder-skill/
 │   ├── site_kontrol.py           Zararlı sorgu + yeni site kararı (ELE / DİKKAT / TEMİZ)
 │   └── export_excel.py           Internal + Shared Excel'e aylık sayfa
 ├── hooks/hooks.json              Eski sürümde çalışmayı engelleyen hook'lar
-├── references/widget.md          claude.ai için opsiyonel panel
+├── references/
+│   ├── dataforseo_fallback.md    Ahrefs kotası dolunca DataForSEO karşılıkları
+│   └── widget.md                 claude.ai için opsiyonel panel
 └── requirements.txt
 ```
