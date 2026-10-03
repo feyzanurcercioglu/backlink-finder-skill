@@ -191,9 +191,10 @@ if __name__ == '__main__':
     ap.add_argument('plan')
     ap.add_argument('--internal', required=True, help='<Marka>_Backlink_Internal.xlsx (3 blok)')
     ap.add_argument('--shared', required=True, help='<Marka>_Backlink_Shared.xlsx (sadece plan tablosu)')
-    ap.add_argument('--open', action='store_true', help='Yazdıktan sonra iki dosyayı varsayılan uygulamada (Excel) aç')
-    ap.add_argument('--link-dir', help='Kullanıcının çalıştığı klasör: iki dosyaya buradan kısayol (symlink) oluşturulur; '
-                                       'kısayol açılamıyorsa (Windows) kopyalanır')
+    ap.add_argument('--open', action='store_true', help='(varsayılan zaten açar; geriye dönük uyumluluk için)')
+    ap.add_argument('--no-open', action='store_true', help='Dosyaları açma (sunucu/sanal makine ortamı)')
+    ap.add_argument('--link-dir', help='Kısayol klasörü (varsayılan: çalışılan klasör, yani os.getcwd())')
+    ap.add_argument('--no-link', action='store_true', help='Çalışılan klasöre kısayol koyma')
     a = ap.parse_args()
     plan = json.load(open(a.plan, encoding='utf-8'))
     missing = [s['domain'] for s in plan['sites'] if not s.get('inbound_note')]
@@ -205,7 +206,14 @@ if __name__ == '__main__':
     print(f'  Internal: {a.internal}')
     print(f'  Shared:   {a.shared}')
     targets = [a.internal, a.shared]
-    if a.link_dir:
+    headless = platform.system() == 'Linux' and not os.environ.get('DISPLAY')
+    home = os.path.expanduser('~')
+    if not a.link_dir and not a.no_link:
+        cwd = os.getcwd()
+        # ana dizinde ya da markanın kendi klasöründe çalışılıyorsa kısayol koyma
+        if os.path.realpath(cwd) not in (os.path.realpath(home), os.path.realpath(os.path.dirname(os.path.abspath(a.internal)))):
+            a.link_dir = cwd
+    if a.link_dir and not a.no_link:
         os.makedirs(a.link_dir, exist_ok=True)
         links = []
         for f in (a.internal, a.shared):
@@ -224,7 +232,7 @@ if __name__ == '__main__':
         print('  Çalışma klasöründeki linkler:')
         for l in links:
             print(f'    {l}')
-    if a.open:
+    if not a.no_open and not headless:
         for f in targets:
             try:
                 if platform.system() == 'Darwin':

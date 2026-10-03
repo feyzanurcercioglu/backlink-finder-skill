@@ -81,7 +81,7 @@ Opsiyonel girdiler (sorma, verilirse kullan): çalışma ayı (varsayılan için
 [4] SEOmonitor → önceki ayın kelimeleri → öncelik grubu + dalgalanma + kategori (keyword_select.py)
 [5] Kategori taraması (category_scan.py) → menü teyidi → Ahrefs DR/trafik → güvenlik kontrolü (zararlı sorgu + 18 ay geçmiş, site_kontrol.py)
     → Inbound Notu araştırması → bütçe doluluğu → kelime ataması
-[6] Planı sohbette sun + aynı anda Internal + Shared Excel'e ayın sayfasını yazıp aç (export_excel.py --open)
+[6] Planı sohbette sun + aynı anda Internal + Shared Excel'e ayın sayfasını yaz ve aç (export_excel.py; açma ve kısayol varsayılan, onay beklenmez)
 [7] Revize gelirse planı ve Excel'i güncelle, yeniden aç
 ```
 
@@ -282,7 +282,7 @@ Elenen sezonluk kelimeler, elenen siteler (gerekçeli: kategori yok / PBN / DR) 
 
 Tabloda her kelimenin **link verilecek URL'i** (markanın kategori sayfası, tam yol) ve her sitenin **yayın kategorisi URL'i** mutlaka yer alır; ekip linki ve yayın yerini tablodan doğrudan kontrol edebilmeli. Sunmadan önce her iki URL tipini `curl -s -o /dev/null -L -w "%{http_code}"` ile kontrol et; 200 dönmeyen URL'i kullanma, doğrusunu bul.
 
-**Çalışmayı sohbette ve Excel'de birlikte ver:**
+**Çalışmayı sohbette ve Excel'de birlikte ver (zorunlu):** Plan her sunulduğunda (ilk sunum ve her revizyon) Excel'ler **o anda** yazılır ve kullanıcının bilgisayarında açılır. "Excel'i çıkarayım mı?" diye sorma, onay bekleme; DİKKAT işaretli site, bütçe seçeneği gibi açık kararlar olsa bile mevcut planla yaz, karar gelince revizyonla güncelle. Excel yazılıp açılmadan çalışma teslim edilmiş sayılmaz.
 - **Sohbette:** planın tamamını tablo olarak ver; özetle yetinme. Plan tablosu (site, DR, trafik, ücretler, kelime, link verilecek URL, yayın kategorisi, Inbound Notu, güvenlik durumu), kelime tablosu ve elenenler. Kullanıcı Excel'i açmadan her şeyi sohbetten okuyabilmeli.
 - **Excel:** aynı anda (onay beklemeden) 7. adımdaki komutla iki dosyayı yaz, `--link-dir` ile kullanıcının Claude Code'u açtığı klasöre (`$PWD`) kısayol koy ve `--open` ile aç. Asıl dosyalar `$U/<Marka>/` altında kalır (aylar orada birikir); çalışma klasöründeki kısayollar aynı dosyayı açar, orada yapılan düzenlemeler kaybolmaz.
 - Mesajın sonunda dosyaları tıklanabilir bağlantı olarak ver, ör. `[Dagi_Backlink_Shared.xlsx](./Dagi_Backlink_Shared.xlsx)` (çalışma klasöründeki kısayol) ve asıl konumu (`~/Documents/Backlink Finder/Dagi/`).
@@ -298,10 +298,12 @@ Bu adım 6. adımdaki sunumla birlikte çalışır (plan sunulur sunulmaz) ve he
 ```bash
 python3 "$P/scripts/export_excel.py" "$W/plan.json" \
   --internal "$U/<Marka>/<Marka>_Backlink_Internal.xlsx" \
-  --shared   "$U/<Marka>/<Marka>_Backlink_Shared.xlsx" --link-dir "$PWD" --open
+  --shared   "$U/<Marka>/<Marka>_Backlink_Shared.xlsx"
 ```
 
-`--link-dir "$PWD"`: kullanıcının çalıştığı klasöre `<Marka>_Backlink_Internal.xlsx` ve `<Marka>_Backlink_Shared.xlsx` kısayolları (symlink; olmazsa kopya) koyar. `$PWD` zaten `$U/<Marka>` ise atlanır.
+Script varsayılan olarak iki dosyayı yazdıktan sonra **açar** (macOS `open`, Windows `startfile`, Linux `xdg-open`) ve çalışılan klasöre (`$PWD`) kısayol koyar; ayrıca bayrak gerekmez. Sadece claude.ai sohbet ortamı/sanal makinede `--no-open --no-link` ver ve dosyaları indirilebilir olarak sun. Çıktıda "Excel dosyaları açıldı." satırını gör; görmezsen nedenini kullanıcıya söyle (ör. dosya Excel'de açık ve kilitli).
+
+Kısayollar: kullanıcının çalıştığı klasöre `<Marka>_Backlink_Internal.xlsx` ve `<Marka>_Backlink_Shared.xlsx` kısayolları (symlink; olmazsa kopya) koyar. `$PWD` zaten `$U/<Marka>` ise atlanır.
 
 Her marka için iki kalıcı dosya vardır; her çalışma ayı bu dosyalara **yeni bir sayfa** olarak eklenir ("Ekim 2026", sonra "Kasım 2026"...). Dosya yoksa oluşturulur. Aynı ayın sayfası zaten varsa (revizyon) yalnızca o sayfa yeniden yazılır, diğer aylara dokunulmaz. Sayfalar kronolojik sıralanır.
 
@@ -356,7 +358,8 @@ Bütçe profile yazılmaz; her ay sorulur.
 7c. **Ahrefs kotası dolarsa** kullanıcıya yazılarak DataForSEO ile devam edilir; hiçbir site doğrulanmadan önerilmez.
 8. **Inbound Notu** her sitede zorunlu; doğrulanmış kategori, trafik ve ilk 5 sorgu bilgisinden kurulur, fiyat/aracı/iç değerlendirme içermez.
 9. **Çıktı** markanın `~/Documents/Backlink Finder/<Marka>/` altındaki Internal ve Shared Excel'lerine ayın sayfası olarak yazılır; plugin dizinine hiçbir şey yazılmaz.
-10. **Çıktı dili** Türkçe; em dash yerine tire kullan.
+10. **Excel her sunumda yazılır ve açılır:** onay beklenmez, sorulmaz; revizyonda aynı ayın sayfası güncellenip yeniden açılır.
+11. **Çıktı dili** Türkçe; em dash yerine tire kullan.
 
 ## Hata durumları
 
