@@ -49,6 +49,9 @@ Claude Code'u yeniden başlatın. Önerilen: `/plugin` > **Marketplaces** > `inb
 **Eski `git clone` kurulumu (`~/.claude/skills/backlink-finder`) kullananlar:** terminalde
 `git -C ~/.claude/skills/backlink-finder pull` çalıştırıp Claude Code'u yeniden başlatın; güncel kurallar ve mecra
 listesi gelir. Yine de plugin kurulumuna geçmeniz önerilir (aşağıdaki komutlar).
+`git pull` "untracked working tree files would be overwritten" hatası verirse (ör. kendi oluşturduğunuz
+`brands/<marka>.json` artık repoda da varsa) o dosyayı `~/Documents/Backlink Finder/_profiller/` altına taşıyıp
+`git pull`'u tekrar çalıştırın.
 
 > Plugin güncel değilse **çalışmaz**: her çalıştırmada GitHub'daki son sürümle karşılaştırılır; eskiyse
 > plan hazırlanmaz ve aşağıdaki güncelleme komutu gösterilir. Güncelleyip Claude Code'u yeniden başlatın.
