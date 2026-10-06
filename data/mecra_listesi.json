@@ -1,9 +1,18 @@
 {
   "dosya": "mecra_listesi.xlsx",
-  "kaynak": "(Internal) Inbound x Backlink Siteleri - Eylül 2026.xlsx",
-  "liste_ayi": "Eylül 2026",
+  "kaynak": "Whitepress Ekim Listesi + (Internal) Inbound x Backlink Siteleri - Eylül 2026 (Exclion+, LinkRaiser+)",
+  "kaynaklar": {
+    "Whitepress+": "Whitepress Ekim Listesi.xlsx (Ekim 2026)",
+    "Exclion+": "(Internal) Inbound x Backlink Siteleri - Eylül 2026.xlsx",
+    "LinkRaiser+": "(Internal) Inbound x Backlink Siteleri - Eylül 2026.xlsx"
+  },
+  "liste_ayi": "Ekim 2026 (Whitepress) / Eylül 2026 (Exclion, LinkRaiser)",
   "kullanim_ayi": "Ekim 2026",
-  "guncelleme": "2026-10-01",
-  "araci_sayfalari": ["Whitepress+", "Exclion+", "LinkRaiser+"],
+  "guncelleme": "2026-10-06",
+  "araci_sayfalari": [
+    "Whitepress+",
+    "Exclion+",
+    "LinkRaiser+"
+  ],
   "fiyat_sutunu": "% Eklenen Fiyat (markaya yansıtılacak fiyat)"
 }

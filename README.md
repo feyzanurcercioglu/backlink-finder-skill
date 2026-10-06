@@ -67,8 +67,15 @@ ya da Claude Code içinde önce `/plugin marketplace update inbound-seo`, sonra 
 
 ## Güncel mecra listesi
 
-Siteler yalnızca plugin içindeki aylık aracı listesinden seçilir: **(Internal) Inbound x Backlink Siteleri - Eylül 2026**
-(Whitepress+, Exclion+, LinkRaiser+; Ekim 2026 çalışmaları için). Liste her ay yönetici tarafından güncellenir.
+Siteler yalnızca plugin içindeki aracı listesinden seçilir (Ekim 2026 çalışmaları için):
+
+| Sayfa | Kaynak |
+|---|---|
+| Whitepress+ | Whitepress Ekim Listesi (Ekim 2026, 1.384 site) |
+| Exclion+ | (Internal) Inbound x Backlink Siteleri - Eylül 2026 |
+| LinkRaiser+ | (Internal) Inbound x Backlink Siteleri - Eylül 2026 |
+
+Liste yönetici tarafından güncellenir; aracılardan biri yeni liste gönderdiğinde sadece o sayfa değişir.
 
 ## Kullanım
 
@@ -127,8 +134,8 @@ Ara dosyalar `~/Documents/Backlink Finder/<Marka>/calisma/<Ay_Yıl>/` altında t
 
 Ay başında yeni "(Internal) Inbound x Backlink Siteleri - <Ay Yıl>.xlsx" geldiğinde:
 
-1. Dosyayı `data/mecra_listesi.xlsx` olarak değiştir.
-2. `data/mecra_listesi.json`'da `kaynak`, `liste_ayi`, `kullanim_ayi`, `guncelleme` alanlarını güncelle.
+1. Dosyayı `data/mecra_listesi.xlsx` olarak değiştir (tek aracının yeni listesi geldiyse sadece o sayfayı değiştir, diğer sayfalar kalır).
+2. `data/mecra_listesi.json`'da `kaynak`, `kaynaklar`, `liste_ayi`, `kullanim_ayi`, `guncelleme` alanlarını güncelle.
 3. `.claude-plugin/plugin.json`'da `version`'ı artır (ör. 1.0.0 → 1.1.0). **Sürüm artmazsa ekip güncellemeyi almaz.**
 4. SKILL.md değiştiyse `python3 scripts/kok_skill_esitle.py` (kökteki SKILL.md'yi eşitler; eski git-clone kurulumları onu kullanır).
 5. Commit + push.

@@ -103,7 +103,7 @@ Script ayrıca Excel'lerdeki "Keyword" sütunundan son 6 ayın kelimelerini `$W/
 
 ### 2. Havuz
 
-**Site kaynağı:** Siteler **yalnızca** plugin'deki aylık mecra listesinden seçilir: `$P/data/mecra_listesi.xlsx` (şu an "(Internal) Inbound x Backlink Siteleri - Eylül 2026.xlsx", Whitepress+ / Exclion+ / LinkRaiser+ sayfaları; hangi ayın listesi olduğu `data/mecra_listesi.json`'da). Listede olmayan bir siteyi (web aramasında bulunan, önceki aylardan hatırlanan vb.) önerme: fiyatı ve aracısı belli değildir. Kullanıcıya her çalışmada "Siteler <kaynak> listesinden seçiliyor" diye yaz.
+**Site kaynağı:** Siteler **yalnızca** plugin'deki aylık mecra listesinden seçilir: `$P/data/mecra_listesi.xlsx` (Whitepress+ / Exclion+ / LinkRaiser+ sayfaları; her sayfanın hangi aracı listesinden ve hangi aydan geldiği `data/mecra_listesi.json`'daki `kaynak` ve `kaynaklar` alanlarında. Aracılar listelerini farklı zamanlarda gönderebilir; ör. Whitepress Ekim, diğerleri Eylül). Listede olmayan bir siteyi (web aramasında bulunan, önceki aylardan hatırlanan vb.) önerme: fiyatı ve aracısı belli değildir. Kullanıcıya her çalışmada "Siteler <kaynak> listesinden seçiliyor" diye yaz.
 
 ```bash
 python3 "$P/scripts/build_pool.py" "$P/data/mecra_listesi.xlsx" [--metrics "<dr_trafik_listesi>.xlsx"] --out "$W/pool.csv"
